@@ -2,8 +2,11 @@
 
 from pathlib import Path
 
+import pytest
+
 from redactify.core.engine import RedactionEngine
 from redactify.core.redactor import RedactionMode
+from redactify.exceptions import UnsupportedFileTypeError
 
 FIXTURES = Path(__file__).parent / "fixtures"
 
@@ -42,8 +45,10 @@ class TestBatchProcessing:
 
     def test_scan_directory_invalid_path(self):
         engine = RedactionEngine(use_ner=False)
-        try:
+        with pytest.raises(NotADirectoryError):
             engine.scan_directory(Path("/nonexistent/dir"))
-            assert False, "Should have raised"
-        except NotADirectoryError:
-            pass
+
+    def test_unsupported_file_raises(self):
+        engine = RedactionEngine(use_ner=False)
+        with pytest.raises(UnsupportedFileTypeError):
+            engine.scan(Path("/tmp/file.unsupported"))
