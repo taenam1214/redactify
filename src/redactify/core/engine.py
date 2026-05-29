@@ -184,14 +184,30 @@ class RedactionEngine:
             redacted=True,
         )
 
+    def _iter_files(self, directory: Path, recursive: bool = False):
+        """Iterate over supported files in a directory."""
+        if recursive:
+            items = sorted(directory.rglob("*"))
+        else:
+            items = sorted(directory.iterdir())
+
+        for file_path in items:
+            if file_path.is_file() and not file_path.name.startswith("."):
+                try:
+                    self._get_parser(file_path)
+                except UnsupportedFileTypeError:
+                    continue
+                yield file_path
+
     def redact_directory(
-        self, input_dir: Path, output_dir: Path | None = None
+        self, input_dir: Path, output_dir: Path | None = None, recursive: bool = False
     ) -> list[RedactionReport]:
         """Redact all supported files in a directory.
 
         Args:
             input_dir: Path to the input directory.
             output_dir: Path for redacted outputs. Defaults to <input_dir>/redacted/.
+            recursive: If True, process subdirectories recursively.
 
         Returns:
             A list of RedactionReports for each processed file.
@@ -206,24 +222,19 @@ class RedactionEngine:
         output_dir.mkdir(parents=True, exist_ok=True)
 
         reports: list[RedactionReport] = []
-        for file_path in sorted(input_dir.iterdir()):
-            if file_path.is_file() and not file_path.name.startswith("."):
-                try:
-                    self._get_parser(file_path)
-                except UnsupportedFileTypeError:
-                    continue  # Skip unsupported files
-
-                out_path = output_dir / file_path.name
-                report = self.redact(file_path, output_path=out_path)
-                reports.append(report)
+        for file_path in self._iter_files(input_dir, recursive):
+            out_path = output_dir / file_path.name
+            report = self.redact(file_path, output_path=out_path)
+            reports.append(report)
 
         return reports
 
-    def scan_directory(self, input_dir: Path) -> list[RedactionReport]:
+    def scan_directory(self, input_dir: Path, recursive: bool = False) -> list[RedactionReport]:
         """Scan all supported files in a directory for PII.
 
         Args:
             input_dir: Path to the directory to scan.
+            recursive: If True, scan subdirectories recursively.
 
         Returns:
             A list of RedactionReports for each scanned file.
@@ -233,13 +244,8 @@ class RedactionEngine:
             raise NotADirectoryError(f"Not a directory: {input_dir}")
 
         reports: list[RedactionReport] = []
-        for file_path in sorted(input_dir.iterdir()):
-            if file_path.is_file() and not file_path.name.startswith("."):
-                try:
-                    self._get_parser(file_path)
-                except UnsupportedFileTypeError:
-                    continue
-                report = self.scan(file_path)
-                reports.append(report)
+        for file_path in self._iter_files(input_dir, recursive):
+            report = self.scan(file_path)
+            reports.append(report)
 
         return reports
