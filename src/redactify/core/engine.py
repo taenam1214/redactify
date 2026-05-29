@@ -27,9 +27,10 @@ class RedactionEngine:
         custom_string: str = "[REDACTED]",
         detect_types: list[PIIType] | None = None,
         use_ner: bool = True,
+        custom_patterns: list[dict] | None = None,
     ):
         self.redactor = Redactor(mode=mode, custom_string=custom_string)
-        self.detector = self._build_detector(detect_types, use_ner)
+        self.detector = self._build_detector(detect_types, use_ner, custom_patterns)
         self.parsers: list[BaseParser] = self._build_parsers()
 
     @staticmethod
@@ -49,7 +50,7 @@ class RedactionEngine:
         return parsers
 
     def _build_detector(
-        self, detect_types: list[PIIType] | None, use_ner: bool
+        self, detect_types: list[PIIType] | None, use_ner: bool, custom_patterns: list[dict] | None = None
     ) -> CompositeDetector:
         """Build a composite detector based on requested PII types."""
         composite = CompositeDetector()
@@ -83,6 +84,11 @@ class RedactionEngine:
                     composite.add_detector(NERDetector())
                 except RuntimeError:
                     pass  # spaCy model not available, skip NER
+
+        # Add custom pattern detector if patterns provided
+        if custom_patterns:
+            from redactify.detectors.custom import CustomPatternDetector
+            composite.add_detector(CustomPatternDetector(custom_patterns))
 
         return composite
 
