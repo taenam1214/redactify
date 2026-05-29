@@ -1,0 +1,56 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "redactify"
+version = "0.1.0"
+description = "Privacy-preserving document redaction tool. Runs 100% locally."
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.10"
+authors = [
+    { name = "taenam1214" },
+]
+keywords = ["privacy", "redaction", "pii", "document", "security"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Legal Industry",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Security",
+    "Topic :: Text Processing",
+]
+dependencies = [
+    "click>=8.0",
+    "spacy>=3.5",
+]
+
+[project.optional-dependencies]
+pdf = ["PyMuPDF>=1.22"]
+docx = ["python-docx>=0.8"]
+ocr = ["pytesseract>=0.3", "Pillow>=9.0"]
+all = ["PyMuPDF>=1.22", "python-docx>=0.8", "pytesseract>=0.3", "Pillow>=9.0"]
+dev = ["pytest>=7.0", "ruff>=0.1"]
+
+[project.scripts]
+redactify = "redactify.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/taenam1214/redactify"
+Repository = "https://github.com/taenam1214/redactify"
+Issues = "https://github.com/taenam1214/redactify/issues"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/redactify"]
+
+[tool.ruff]
+target-version = "py310"
+line-length = 100
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
