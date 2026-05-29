@@ -38,8 +38,9 @@ def main():
 )
 @click.option("--detect", type=str, default=None, help="Comma-separated PII types to detect.")
 @click.option("--no-ner", is_flag=True, help="Disable NER-based detection (names, orgs, locations).")
+@click.option("--confidence", type=float, default=0.0, help="Minimum confidence threshold (0.0-1.0).")
 @click.option("--format", "report_format", type=click.Choice(["console", "json"]), default="console")
-def redact(file: Path, output: Path | None, mode: str, detect: str | None, no_ner: bool, report_format: str):
+def redact(file: Path, output: Path | None, mode: str, detect: str | None, no_ner: bool, confidence: float, report_format: str):
     """Redact PII from a document or directory."""
     detect_types = _parse_detect_types(detect)
     redaction_mode = RedactionMode(mode)
@@ -48,6 +49,7 @@ def redact(file: Path, output: Path | None, mode: str, detect: str | None, no_ne
         mode=redaction_mode,
         detect_types=detect_types,
         use_ner=not no_ner,
+        confidence_threshold=confidence,
     )
 
     reporter = JSONReporter() if report_format == "json" else ConsoleReporter()
@@ -71,14 +73,16 @@ def redact(file: Path, output: Path | None, mode: str, detect: str | None, no_ne
 @click.argument("file", type=click.Path(exists=True, path_type=Path))
 @click.option("--detect", type=str, default=None, help="Comma-separated PII types to detect.")
 @click.option("--no-ner", is_flag=True, help="Disable NER-based detection.")
+@click.option("--confidence", type=float, default=0.0, help="Minimum confidence threshold (0.0-1.0).")
 @click.option("--format", "report_format", type=click.Choice(["console", "json"]), default="console")
-def scan(file: Path, detect: str | None, no_ner: bool, report_format: str):
+def scan(file: Path, detect: str | None, no_ner: bool, confidence: float, report_format: str):
     """Scan a document or directory for PII without redacting."""
     detect_types = _parse_detect_types(detect)
 
     engine = RedactionEngine(
         detect_types=detect_types,
         use_ner=not no_ner,
+        confidence_threshold=confidence,
     )
 
     reporter = JSONReporter() if report_format == "json" else ConsoleReporter()
