@@ -51,6 +51,8 @@ class RedactionEngine:
             parsers.append(DocxParser())
         except ImportError:
             pass
+        from redactify.parsers.html import HTMLParser
+        parsers.append(HTMLParser())
         return parsers
 
     def _build_detector(
