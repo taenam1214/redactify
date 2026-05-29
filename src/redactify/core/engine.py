@@ -5,6 +5,7 @@ from pathlib import Path
 from redactify.core.detector import PIIEntity, PIIType
 from redactify.core.filters import filter_by_confidence
 from redactify.core.redactor import Redactor, RedactionMode
+from redactify.exceptions import UnsupportedFileTypeError
 from redactify.detectors.composite import CompositeDetector
 from redactify.detectors.regex import (
     CreditCardDetector,
@@ -100,7 +101,7 @@ class RedactionEngine:
         for parser in self.parsers:
             if parser.can_handle(file_path):
                 return parser
-        raise ValueError(f"No parser available for file: {file_path}")
+        raise UnsupportedFileTypeError(file_path)
 
     def scan(self, file_path: Path) -> RedactionReport:
         """Scan a file for PII without redacting.
