@@ -130,12 +130,17 @@ ruff check src/ tests/
 
 ## Roadmap
 
-- [ ] Batch processing (directories)
+- [x] Batch processing (directories)
+- [x] Custom pattern definitions via config file
+- [x] Recursive directory scanning
+- [x] HTML file support
+- [x] Dry-run mode
+- [x] Confidence threshold filtering
 - [ ] OCR support (images with text)
-- [ ] Custom pattern definitions via config file
 - [ ] Web UI (local, no server)
 - [ ] Multi-language NER support
 - [ ] Pre-commit hook integration
+- [ ] Streaming/large file support
 
 ## License
 
