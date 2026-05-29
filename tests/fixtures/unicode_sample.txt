@@ -1,0 +1,16 @@
+International Contact List
+=========================
+
+Name: José García
+Email: jose.garcia@empresa.es
+Phone: +34 91 123 4567
+
+Name: Müller, Hans
+Email: hans.mueller@firma.de
+Phone: +49 30 1234 5678
+
+Name: 田中太郎
+Email: tanaka@company.co.jp
+
+Name: François Dubois
+Email: francois.dubois@société.fr
