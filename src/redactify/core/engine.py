@@ -3,6 +3,7 @@
 from pathlib import Path
 
 from redactify.core.detector import PIIEntity, PIIType
+from redactify.core.filters import filter_by_confidence
 from redactify.core.redactor import Redactor, RedactionMode
 from redactify.detectors.composite import CompositeDetector
 from redactify.detectors.regex import (
@@ -28,10 +29,12 @@ class RedactionEngine:
         detect_types: list[PIIType] | None = None,
         use_ner: bool = True,
         custom_patterns: list[dict] | None = None,
+        confidence_threshold: float = 0.0,
     ):
         self.redactor = Redactor(mode=mode, custom_string=custom_string)
         self.detector = self._build_detector(detect_types, use_ner, custom_patterns)
         self.parsers: list[BaseParser] = self._build_parsers()
+        self.confidence_threshold = confidence_threshold
 
     @staticmethod
     def _build_parsers() -> list[BaseParser]:
@@ -117,6 +120,9 @@ class RedactionEngine:
             entities = self.detector.detect(chunk.text)
             all_entities.extend(entities)
 
+        if self.confidence_threshold > 0:
+            all_entities = filter_by_confidence(all_entities, self.confidence_threshold)
+
         entities_by_type: dict[str, int] = {}
         for entity in all_entities:
             key = entity.pii_type.value
@@ -149,6 +155,8 @@ class RedactionEngine:
 
         for chunk in document.chunks:
             entities = self.detector.detect(chunk.text)
+            if self.confidence_threshold > 0:
+                entities = filter_by_confidence(entities, self.confidence_threshold)
             all_entities.extend(entities)
             redacted_text = self.redactor.redact(chunk.text, entities)
             redacted_chunks.append(redacted_text)
