@@ -210,7 +210,7 @@ class RedactionEngine:
             if file_path.is_file() and not file_path.name.startswith("."):
                 try:
                     self._get_parser(file_path)
-                except ValueError:
+                except UnsupportedFileTypeError:
                     continue  # Skip unsupported files
 
                 out_path = output_dir / file_path.name
@@ -237,7 +237,7 @@ class RedactionEngine:
             if file_path.is_file() and not file_path.name.startswith("."):
                 try:
                     self._get_parser(file_path)
-                except ValueError:
+                except UnsupportedFileTypeError:
                     continue
                 report = self.scan(file_path)
                 reports.append(report)
