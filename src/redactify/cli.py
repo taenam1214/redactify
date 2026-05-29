@@ -40,8 +40,9 @@ def main():
 @click.option("--no-ner", is_flag=True, help="Disable NER-based detection (names, orgs, locations).")
 @click.option("--confidence", type=float, default=0.0, help="Minimum confidence threshold (0.0-1.0).")
 @click.option("-r", "--recursive", is_flag=True, help="Process directories recursively.")
+@click.option("--dry-run", is_flag=True, help="Preview what would be redacted without writing files.")
 @click.option("--format", "report_format", type=click.Choice(["console", "json"]), default="console")
-def redact(file: Path, output: Path | None, mode: str, detect: str | None, no_ner: bool, confidence: float, recursive: bool, report_format: str):
+def redact(file: Path, output: Path | None, mode: str, detect: str | None, no_ner: bool, confidence: float, recursive: bool, dry_run: bool, report_format: str):
     """Redact PII from a document or directory."""
     detect_types = _parse_detect_types(detect)
     redaction_mode = RedactionMode(mode)
@@ -54,6 +55,17 @@ def redact(file: Path, output: Path | None, mode: str, detect: str | None, no_ne
     )
 
     reporter = JSONReporter() if report_format == "json" else ConsoleReporter()
+
+    if dry_run:
+        # Dry run: scan only, show what would be redacted
+        if file.is_dir():
+            reports = engine.scan_directory(file, recursive=recursive)
+        else:
+            reports = [engine.scan(file)]
+        for report in reports:
+            click.echo(reporter.report(report))
+        click.echo("\n  [DRY RUN] No files were modified.")
+        return
 
     if file.is_dir():
         reports = engine.redact_directory(file, output_dir=output, recursive=recursive)
