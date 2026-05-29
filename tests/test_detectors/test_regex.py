@@ -1,0 +1,141 @@
+"""Tests for regex-based PII detectors."""
+
+from redactify.core.detector import PIIType
+from redactify.detectors.regex import (
+    CreditCardDetector,
+    DateOfBirthDetector,
+    EmailDetector,
+    IPAddressDetector,
+    PhoneDetector,
+    SSNDetector,
+)
+
+
+class TestEmailDetector:
+    def setup_method(self):
+        self.detector = EmailDetector()
+
+    def test_detects_simple_email(self):
+        entities = self.detector.detect("Contact me at john@example.com please")
+        assert len(entities) == 1
+        assert entities[0].text == "john@example.com"
+        assert entities[0].pii_type == PIIType.EMAIL
+
+    def test_detects_multiple_emails(self):
+        text = "Send to alice@test.org and bob@company.co.uk"
+        entities = self.detector.detect(text)
+        assert len(entities) == 2
+
+    def test_detects_email_with_plus(self):
+        entities = self.detector.detect("user+tag@gmail.com")
+        assert len(entities) == 1
+        assert entities[0].text == "user+tag@gmail.com"
+
+    def test_no_false_positive_on_plain_text(self):
+        entities = self.detector.detect("This is just a normal sentence.")
+        assert len(entities) == 0
+
+
+class TestPhoneDetector:
+    def setup_method(self):
+        self.detector = PhoneDetector()
+
+    def test_detects_us_phone_with_dashes(self):
+        entities = self.detector.detect("Call me at 555-123-4567")
+        assert len(entities) == 1
+        assert entities[0].pii_type == PIIType.PHONE
+
+    def test_detects_us_phone_with_parens(self):
+        entities = self.detector.detect("Phone: (555) 123-4567")
+        assert len(entities) == 1
+
+    def test_detects_international_phone(self):
+        entities = self.detector.detect("Call +44 20 7946 0958")
+        assert len(entities) == 1
+
+    def test_no_false_positive(self):
+        entities = self.detector.detect("The year 2024 was great.")
+        assert len(entities) == 0
+
+
+class TestSSNDetector:
+    def setup_method(self):
+        self.detector = SSNDetector()
+
+    def test_detects_ssn_with_dashes(self):
+        entities = self.detector.detect("SSN: 123-45-6789")
+        assert len(entities) == 1
+        assert entities[0].pii_type == PIIType.SSN
+
+    def test_detects_ssn_without_dashes(self):
+        entities = self.detector.detect("SSN: 123456789")
+        assert len(entities) == 1
+
+    def test_rejects_invalid_ssn_000(self):
+        entities = self.detector.detect("SSN: 000-12-3456")
+        assert len(entities) == 0
+
+    def test_rejects_invalid_ssn_666(self):
+        entities = self.detector.detect("SSN: 666-12-3456")
+        assert len(entities) == 0
+
+
+class TestCreditCardDetector:
+    def setup_method(self):
+        self.detector = CreditCardDetector()
+
+    def test_detects_visa(self):
+        # Valid Visa test number
+        entities = self.detector.detect("Card: 4111 1111 1111 1111")
+        assert len(entities) == 1
+        assert entities[0].pii_type == PIIType.CREDIT_CARD
+
+    def test_detects_with_dashes(self):
+        entities = self.detector.detect("Card: 4111-1111-1111-1111")
+        assert len(entities) == 1
+
+    def test_rejects_invalid_luhn(self):
+        entities = self.detector.detect("Card: 4111 1111 1111 1112")
+        assert len(entities) == 0
+
+
+class TestIPAddressDetector:
+    def setup_method(self):
+        self.detector = IPAddressDetector()
+
+    def test_detects_valid_ip(self):
+        entities = self.detector.detect("Server at 192.168.1.1")
+        assert len(entities) == 1
+        assert entities[0].text == "192.168.1.1"
+        assert entities[0].pii_type == PIIType.IP_ADDRESS
+
+    def test_rejects_invalid_ip(self):
+        entities = self.detector.detect("Not an IP: 999.999.999.999")
+        assert len(entities) == 0
+
+    def test_detects_multiple_ips(self):
+        text = "From 10.0.0.1 to 172.16.0.1"
+        entities = self.detector.detect(text)
+        assert len(entities) == 2
+
+
+class TestDateOfBirthDetector:
+    def setup_method(self):
+        self.detector = DateOfBirthDetector()
+
+    def test_detects_dob_with_context(self):
+        text = "Date of birth: 01/15/1990"
+        entities = self.detector.detect(text)
+        assert len(entities) == 1
+        assert entities[0].confidence == 0.9
+
+    def test_lower_confidence_without_context(self):
+        text = "The date was 03/25/2020 when we met."
+        entities = self.detector.detect(text)
+        if entities:
+            assert entities[0].confidence == 0.5
+
+    def test_detects_written_date(self):
+        text = "Born on January 15, 1990"
+        entities = self.detector.detect(text)
+        assert len(entities) == 1
