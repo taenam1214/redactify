@@ -124,6 +124,20 @@ def config(do_init: bool, show: bool, path: Path | None):
         click.echo("Use --init to create a config or --show to display current config.")
 
 
+@main.command()
+def supported():
+    """List all supported PII types and file formats."""
+    click.echo("\n  Supported PII types:")
+    for pii_type in PIIType:
+        click.echo(f"    - {pii_type.value}")
+    click.echo("\n  Supported file formats:")
+    click.echo("    - .txt, .csv, .log, .md (plain text)")
+    click.echo("    - .html, .htm (HTML)")
+    click.echo("    - .pdf (requires: pip install redactify[pdf])")
+    click.echo("    - .docx (requires: pip install redactify[docx])")
+    click.echo("")
+
+
 def _parse_detect_types(detect: str | None) -> list[PIIType] | None:
     """Parse comma-separated PII type string into a list."""
     if detect is None:
