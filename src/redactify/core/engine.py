@@ -168,3 +168,63 @@ class RedactionEngine:
             entities=all_entities,
             redacted=True,
         )
+
+    def redact_directory(
+        self, input_dir: Path, output_dir: Path | None = None
+    ) -> list[RedactionReport]:
+        """Redact all supported files in a directory.
+
+        Args:
+            input_dir: Path to the input directory.
+            output_dir: Path for redacted outputs. Defaults to <input_dir>/redacted/.
+
+        Returns:
+            A list of RedactionReports for each processed file.
+        """
+        input_dir = Path(input_dir)
+        if not input_dir.is_dir():
+            raise NotADirectoryError(f"Not a directory: {input_dir}")
+
+        if output_dir is None:
+            output_dir = input_dir / "redacted"
+        output_dir = Path(output_dir)
+        output_dir.mkdir(parents=True, exist_ok=True)
+
+        reports: list[RedactionReport] = []
+        for file_path in sorted(input_dir.iterdir()):
+            if file_path.is_file() and not file_path.name.startswith("."):
+                try:
+                    self._get_parser(file_path)
+                except ValueError:
+                    continue  # Skip unsupported files
+
+                out_path = output_dir / file_path.name
+                report = self.redact(file_path, output_path=out_path)
+                reports.append(report)
+
+        return reports
+
+    def scan_directory(self, input_dir: Path) -> list[RedactionReport]:
+        """Scan all supported files in a directory for PII.
+
+        Args:
+            input_dir: Path to the directory to scan.
+
+        Returns:
+            A list of RedactionReports for each scanned file.
+        """
+        input_dir = Path(input_dir)
+        if not input_dir.is_dir():
+            raise NotADirectoryError(f"Not a directory: {input_dir}")
+
+        reports: list[RedactionReport] = []
+        for file_path in sorted(input_dir.iterdir()):
+            if file_path.is_file() and not file_path.name.startswith("."):
+                try:
+                    self._get_parser(file_path)
+                except ValueError:
+                    continue
+                report = self.scan(file_path)
+                reports.append(report)
+
+        return reports
