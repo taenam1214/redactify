@@ -3,6 +3,7 @@
 from pathlib import Path
 
 from redactify.parsers.base import BaseParser, DocumentChunk, ParsedDocument
+from redactify.utils.encoding import read_file_safe
 
 
 class TextParser(BaseParser):
@@ -16,7 +17,7 @@ class TextParser(BaseParser):
         if not file_path.exists():
             raise FileNotFoundError(f"File not found: {file_path}")
 
-        text = file_path.read_text(encoding="utf-8")
+        text = read_file_safe(file_path)
         chunk = DocumentChunk(text=text)
 
         return ParsedDocument(
