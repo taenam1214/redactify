@@ -1,0 +1,16 @@
+{
+  "mode": "label",
+  "detect_types": [],
+  "use_ner": true,
+  "custom_patterns": [
+    {
+      "name": "medical_record",
+      "pattern": "MRN-\\d{6}"
+    },
+    {
+      "name": "order_id",
+      "pattern": "ORD-\\d{5,10}"
+    }
+  ],
+  "output_format": "console"
+}
