@@ -1,146 +1,255 @@
-# 🔒 Redactify
-
-**Privacy-preserving document redaction. 100% local. Zero data leaves your machine.**
-
-[![CI](https://github.com/taenam1214/redactify/actions/workflows/ci.yml/badge.svg)](https://github.com/taenam1214/redactify/actions/workflows/ci.yml)
-[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
+<p align="center">
+  <h1 align="center">🔒 Redactify</h1>
+  <p align="center">
+    <strong>Automatically detect and redact PII from documents. 100% local. Zero cloud. Zero trust required.</strong>
+  </p>
+  <p align="center">
+    <a href="https://github.com/taenam1214/redactify/actions/workflows/ci.yml"><img src="https://github.com/taenam1214/redactify/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+    <a href="https://www.python.org/downloads/"><img src="https://img.shields.io/badge/python-3.10+-blue.svg" alt="Python 3.10+"></a>
+    <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a>
+    <a href="https://github.com/taenam1214/redactify/stargazers"><img src="https://img.shields.io/github/stars/taenam1214/redactify?style=social" alt="Stars"></a>
+  </p>
+</p>
 
 ---
 
-Redactify automatically detects and removes personally identifiable information (PII) from your documents — **without ever sending your data to the cloud**.
+## The Problem
 
-Whether you're a lawyer redacting case files, a doctor handling patient records, or a developer building compliance pipelines — Redactify keeps your sensitive data where it belongs: on your machine.
+Every day, sensitive documents containing names, emails, SSNs, credit cards, and phone numbers are shared, stored, and processed — often without proper redaction. Existing tools either:
+
+- **Send your data to the cloud** (defeating the purpose of privacy)
+- **Cost hundreds per month** (enterprise SaaS pricing)
+- **Require manual effort** (highlighting PDFs by hand)
+
+## The Solution
+
+Redactify runs **entirely on your machine**. No API keys. No cloud accounts. No data ever leaves your device.
+
+```
+Input:  "Contact John Smith at john@acme.com or (555) 123-4567. SSN: 123-45-6789"
+Output: "Contact [PERSON] at [EMAIL] or [PHONE]. SSN: [SSN]"
+```
+
+---
+
+## Before & After
+
+```diff
+- Dear John Smith,
+- Your SSN 123-45-6789 has been verified.
+- Contact: john.smith@example.com | (555) 123-4567
+- Card on file: 4111 1111 1111 1111
+
++ Dear [PERSON],
++ Your SSN [SSN] has been verified.
++ Contact: [EMAIL] | [PHONE]
++ Card on file: [CREDIT_CARD]
+```
+
+---
 
 ## Features
 
-- **100% Local** — No API calls, no cloud, no data transmission. Ever.
-- **Multi-format** — Supports PDF, DOCX, and plain text files
-- **Smart Detection** — Combines regex patterns with NLP (spaCy NER) for high accuracy
-- **Multiple Redaction Modes** — Blackout, labels, deterministic hashing, or custom replacements
-- **CLI & Library** — Use from the terminal or import directly in Python
-- **Extensible** — Add custom PII patterns via configuration
+| Feature | Description |
+|---------|-------------|
+| 🏠 **100% Local** | No network calls, no cloud, no telemetry. Ever. |
+| 📄 **Multi-format** | PDF, DOCX, HTML, plain text (.txt, .csv, .log, .md) |
+| 🧠 **Smart Detection** | Regex patterns + spaCy NER for names, orgs, locations |
+| 🎨 **4 Redaction Modes** | Blackout (█████), labels ([EMAIL]), hash, or custom |
+| ⚡ **CLI & Python API** | Use from terminal or import as a library |
+| 🔧 **Extensible** | Add custom regex patterns via config file |
+| 📁 **Batch Processing** | Redact entire directories, recursively |
+| 👁️ **Dry-run Mode** | Preview what would be redacted before writing |
+| 🎯 **Confidence Filtering** | Set thresholds to control detection sensitivity |
+
+---
 
 ## Quick Start
 
-### Installation
+### Install
 
 ```bash
 pip install redactify
-
-# Download the NER model
 python -m spacy download en_core_web_sm
 ```
 
 For PDF/DOCX support:
-
 ```bash
 pip install redactify[all]
 ```
 
-### Usage
-
-#### Redact a document
+### CLI Usage
 
 ```bash
+# Redact a document
 redactify redact document.pdf -o redacted.pdf
-```
 
-#### Scan without redacting (report only)
-
-```bash
+# Scan without modifying (report only)
 redactify scan document.txt
-```
 
-#### Choose redaction mode
-
-```bash
-# Replace PII with type labels: [EMAIL], [PHONE], etc.
+# Choose redaction mode
 redactify redact file.txt --mode label
-
-# Replace with deterministic hashes (preserves referential integrity)
 redactify redact file.txt --mode hash
-
-# Classic blackout
 redactify redact file.txt --mode blackout
-```
 
-#### Select specific PII types
-
-```bash
+# Select specific PII types
 redactify redact file.txt --detect email,phone,ssn
+
+# Batch process a directory
+redactify redact ./documents/ -o ./redacted/ -r
+
+# Preview without writing (dry run)
+redactify redact file.txt --dry-run
+
+# High-confidence detections only
+redactify redact file.txt --confidence 0.8
 ```
 
 ### Python API
 
 ```python
-from redactify.core.engine import RedactionEngine
-from redactify.core.redactor import RedactionMode
+from redactify import RedactionEngine, RedactionMode
 
 engine = RedactionEngine(mode=RedactionMode.LABEL)
 
 # Scan for PII
 report = engine.scan("document.txt")
 print(f"Found {report.total_entities} PII entities")
+for pii_type, count in report.entities_by_type.items():
+    print(f"  {pii_type}: {count}")
 
 # Redact
 report = engine.redact("document.txt", output_path="clean.txt")
 ```
 
+### Custom Patterns
+
+```python
+engine = RedactionEngine(
+    custom_patterns=[
+        {"name": "medical_record", "pattern": r"MRN-\d{6}"},
+        {"name": "employee_id", "pattern": r"EMP-\d{4}"},
+    ]
+)
+```
+
+---
+
 ## What It Detects
 
 | PII Type | Method | Examples |
 |----------|--------|----------|
-| Email addresses | Regex | john@example.com |
-| Phone numbers | Regex | (555) 123-4567, +44 20 7946 0958 |
-| SSN | Regex + validation | 123-45-6789 |
-| Credit cards | Regex + Luhn | 4111 1111 1111 1111 |
-| IP addresses | Regex | 192.168.1.1 |
-| Dates of birth | Regex + context | Born on 01/15/1990 |
-| Person names | spaCy NER | John Smith |
-| Organizations | spaCy NER | Google, NHS |
-| Locations | spaCy NER | New York, London |
+| Email addresses | Regex | `john@example.com` |
+| Phone numbers | Regex | `(555) 123-4567`, `+44 20 7946 0958` |
+| SSN / National IDs | Regex + validation | `123-45-6789` |
+| Credit card numbers | Regex + Luhn | `4111 1111 1111 1111` |
+| IP addresses | Regex | `192.168.1.1` |
+| Dates of birth | Regex + context | `Born on 01/15/1990` |
+| Person names | spaCy NER | `John Smith`, `María García` |
+| Organizations | spaCy NER | `Google`, `NHS`, `Acme Corp` |
+| Locations | spaCy NER | `New York`, `London`, `Tokyo` |
+| Custom patterns | User-defined regex | `MRN-123456`, `ORD-00042` |
 
 ## Redaction Modes
 
-| Mode | Example Output | Use Case |
-|------|---------------|----------|
-| `blackout` | `████████████████` | Maximum privacy |
-| `label` | `[EMAIL]` | Readable output with type context |
-| `hash` | `[REDACTED-a1b2c3d4e5f6]` | Preserves referential integrity |
-| `custom` | `[REMOVED]` | Your own replacement string |
+| Mode | Output | Best For |
+|------|--------|----------|
+| `blackout` | `████████████████` | Maximum privacy, legal documents |
+| `label` | `[EMAIL]` | Readable output, training data |
+| `hash` | `[REDACTED-a1b2c3d4]` | Preserving referential integrity |
+| `custom` | `[REMOVED]` | Custom compliance requirements |
+
+---
+
+## Use Cases
+
+- **Healthcare** — Redact patient records (HIPAA compliance)
+- **Legal** — Strip PII from case files before sharing
+- **HR** — Anonymize resumes and employee documents
+- **Journalism** — Protect source identities in leaked documents
+- **Development** — Sanitize logs and test data before committing
+- **Compliance** — GDPR right-to-erasure workflows
+- **Research** — Anonymize survey responses and interview transcripts
+
+---
+
+## Architecture
+
+```
+redactify/
+├── src/redactify/
+│   ├── cli.py              # Click CLI (redact, scan, config, supported)
+│   ├── core/
+│   │   ├── engine.py       # Main orchestrator
+│   │   ├── detector.py     # Detection interface + PIIType/PIIEntity
+│   │   ├── redactor.py     # Redaction strategies
+│   │   └── filters.py      # Confidence/type/length filtering
+│   ├── detectors/
+│   │   ├── regex.py        # Email, phone, SSN, credit card, IP, DOB
+│   │   ├── ner.py          # spaCy NER (names, orgs, locations)
+│   │   ├── composite.py    # Multi-detector with deduplication
+│   │   └── custom.py       # User-defined patterns
+│   ├── parsers/
+│   │   ├── text.py         # .txt, .csv, .log, .md
+│   │   ├── pdf.py          # PDF (PyMuPDF)
+│   │   ├── docx.py         # DOCX (python-docx)
+│   │   └── html.py         # HTML (tag stripping)
+│   └── reporters/
+│       ├── console.py      # Human-readable output
+│       ├── json_reporter.py # Machine-readable JSON
+│       └── summary.py      # Batch operation summaries
+└── tests/                  # Comprehensive test suite
+```
+
+---
 
 ## Development
 
 ```bash
-# Clone the repo
 git clone https://github.com/taenam1214/redactify.git
 cd redactify
 
-# Install in development mode
-pip install -e ".[dev,all]"
-python -m spacy download en_core_web_sm
+# Install with dev dependencies
+make dev
 
 # Run tests
-pytest tests/ -v
+make test
 
 # Lint
-ruff check src/ tests/
+make lint
 ```
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
+---
 
 ## Roadmap
 
-- [x] Batch processing (directories)
-- [x] Custom pattern definitions via config file
-- [x] Recursive directory scanning
-- [x] HTML file support
+- [x] Core redaction engine
+- [x] Regex + NER detection
+- [x] PDF, DOCX, HTML, plain text support
+- [x] Batch processing with recursive directory support
+- [x] Custom pattern definitions via config
 - [x] Dry-run mode
 - [x] Confidence threshold filtering
 - [ ] OCR support (images with text)
-- [ ] Web UI (local, no server)
-- [ ] Multi-language NER support
+- [ ] Local web UI (drag-and-drop)
+- [ ] Multi-language NER models
 - [ ] Pre-commit hook integration
-- [ ] Streaming/large file support
+- [ ] Streaming support for large files
+- [ ] Redaction audit trail
+
+---
+
+## Privacy Guarantee
+
+Redactify makes **zero network calls** during operation. The only network activity is downloading the spaCy model during initial setup (`python -m spacy download en_core_web_sm`). After that, it works fully offline.
+
+You can verify this: disconnect from the internet and run `redactify redact file.txt`. It works.
+
+See [docs/PRIVACY.md](docs/PRIVACY.md) for the full privacy guarantee.
+
+---
 
 ## License
 
@@ -148,4 +257,8 @@ MIT — see [LICENSE](LICENSE) for details.
 
 ---
 
-**Your data stays yours. Always.**
+<p align="center">
+  <strong>Your data stays yours. Always.</strong>
+  <br><br>
+  <a href="https://github.com/taenam1214/redactify">⭐ Star this repo</a> if you believe privacy tools should be free and open source.
+</p>
