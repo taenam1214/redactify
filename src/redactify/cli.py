@@ -28,7 +28,7 @@ def main():
 
 @main.command()
 @click.argument("file", type=click.Path(exists=True, path_type=Path))
-@click.option("-o", "--output", type=click.Path(path_type=Path), help="Output file path.")
+@click.option("-o", "--output", type=click.Path(path_type=Path), help="Output file or directory path.")
 @click.option(
     "--mode",
     type=click.Choice(MODE_CHOICES),
@@ -39,7 +39,7 @@ def main():
 @click.option("--no-ner", is_flag=True, help="Disable NER-based detection (names, orgs, locations).")
 @click.option("--format", "report_format", type=click.Choice(["console", "json"]), default="console")
 def redact(file: Path, output: Path | None, mode: str, detect: str | None, no_ner: bool, report_format: str):
-    """Redact PII from a document."""
+    """Redact PII from a document or directory."""
     detect_types = _parse_detect_types(detect)
     redaction_mode = RedactionMode(mode)
 
@@ -49,14 +49,21 @@ def redact(file: Path, output: Path | None, mode: str, detect: str | None, no_ne
         use_ner=not no_ner,
     )
 
-    report = engine.redact(file, output_path=output)
-
     reporter = JSONReporter() if report_format == "json" else ConsoleReporter()
-    click.echo(reporter.report(report))
 
-    if report.redacted:
-        out_path = output or file.parent / f"{file.stem}.redacted{file.suffix}"
-        click.echo(f"\n  Output written to: {out_path}")
+    if file.is_dir():
+        reports = engine.redact_directory(file, output_dir=output)
+        for report in reports:
+            click.echo(reporter.report(report))
+            click.echo("")
+        out_dir = output or file / "redacted"
+        click.echo(f"\n  {len(reports)} files redacted to: {out_dir}")
+    else:
+        report = engine.redact(file, output_path=output)
+        click.echo(reporter.report(report))
+        if report.redacted:
+            out_path = output or file.parent / f"{file.stem}.redacted{file.suffix}"
+            click.echo(f"\n  Output written to: {out_path}")
 
 
 @main.command()
@@ -65,7 +72,7 @@ def redact(file: Path, output: Path | None, mode: str, detect: str | None, no_ne
 @click.option("--no-ner", is_flag=True, help="Disable NER-based detection.")
 @click.option("--format", "report_format", type=click.Choice(["console", "json"]), default="console")
 def scan(file: Path, detect: str | None, no_ner: bool, report_format: str):
-    """Scan a document for PII without redacting."""
+    """Scan a document or directory for PII without redacting."""
     detect_types = _parse_detect_types(detect)
 
     engine = RedactionEngine(
@@ -73,10 +80,18 @@ def scan(file: Path, detect: str | None, no_ner: bool, report_format: str):
         use_ner=not no_ner,
     )
 
-    report = engine.scan(file)
-
     reporter = JSONReporter() if report_format == "json" else ConsoleReporter()
-    click.echo(reporter.report(report))
+
+    if file.is_dir():
+        reports = engine.scan_directory(file)
+        for report in reports:
+            click.echo(reporter.report(report))
+            click.echo("")
+        total = sum(r.total_entities for r in reports)
+        click.echo(f"\n  Scanned {len(reports)} files. Total PII found: {total}")
+    else:
+        report = engine.scan(file)
+        click.echo(reporter.report(report))
 
 
 def _parse_detect_types(detect: str | None) -> list[PIIType] | None:
