@@ -9,6 +9,7 @@ from redactify.core.detector import PIIType
 from redactify.core.redactor import RedactionMode
 from redactify.reporters.console import ConsoleReporter
 from redactify.reporters.json_reporter import JSONReporter
+from redactify.utils.config import RedactifyConfig
 
 
 PII_TYPE_CHOICES = [t.value for t in PIIType if t != PIIType.CUSTOM]
@@ -92,6 +93,29 @@ def scan(file: Path, detect: str | None, no_ner: bool, report_format: str):
     else:
         report = engine.scan(file)
         click.echo(reporter.report(report))
+
+
+@main.command()
+@click.option("--init", "do_init", is_flag=True, help="Create a default config file.")
+@click.option("--show", is_flag=True, help="Show current configuration.")
+@click.option("--path", type=click.Path(path_type=Path), default=None, help="Config file path.")
+def config(do_init: bool, show: bool, path: Path | None):
+    """Manage Redactify configuration."""
+    if do_init:
+        cfg = RedactifyConfig()
+        cfg.to_file(path)
+        out_path = path or Path.cwd() / ".redactify.json"
+        click.echo(f"  Config created at: {out_path}")
+    elif show:
+        cfg = RedactifyConfig.from_file(path)
+        click.echo(f"  Mode:          {cfg.mode}")
+        click.echo(f"  Detect types:  {cfg.detect_types or 'all'}")
+        click.echo(f"  Use NER:       {cfg.use_ner}")
+        click.echo(f"  Output format: {cfg.output_format}")
+        if cfg.custom_patterns:
+            click.echo(f"  Custom patterns: {len(cfg.custom_patterns)}")
+    else:
+        click.echo("Use --init to create a config or --show to display current config.")
 
 
 def _parse_detect_types(detect: str | None) -> list[PIIType] | None:
