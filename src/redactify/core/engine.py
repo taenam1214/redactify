@@ -30,7 +30,23 @@ class RedactionEngine:
     ):
         self.redactor = Redactor(mode=mode, custom_string=custom_string)
         self.detector = self._build_detector(detect_types, use_ner)
-        self.parsers: list[BaseParser] = [TextParser()]
+        self.parsers: list[BaseParser] = self._build_parsers()
+
+    @staticmethod
+    def _build_parsers() -> list[BaseParser]:
+        """Build list of available parsers."""
+        parsers: list[BaseParser] = [TextParser()]
+        try:
+            from redactify.parsers.pdf import PDFParser
+            parsers.append(PDFParser())
+        except ImportError:
+            pass
+        try:
+            from redactify.parsers.docx import DocxParser
+            parsers.append(DocxParser())
+        except ImportError:
+            pass
+        return parsers
 
     def _build_detector(
         self, detect_types: list[PIIType] | None, use_ner: bool
