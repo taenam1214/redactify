@@ -1,0 +1,8 @@
+Server Log Extract
+==================
+
+[2024-01-15 08:30:22] Connection from 192.168.1.100 to port 443
+[2024-01-15 08:30:23] User admin@company.com authenticated from 10.0.0.42
+[2024-01-15 08:31:01] Failed login attempt from 203.0.113.50
+[2024-01-15 08:31:05] Rate limit exceeded for 198.51.100.25
+[2024-01-15 08:32:00] Connection from 172.16.0.1 closed

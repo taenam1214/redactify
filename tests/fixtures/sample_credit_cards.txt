@@ -1,0 +1,11 @@
+Payment Processing Report
+=========================
+
+Transaction #001: Visa ending in 4111 1111 1111 1111 — $125.00
+Transaction #002: Mastercard ending in 5500 0000 0000 0004 — $89.50
+Transaction #003: Amex ending in 3782 822463 10005 — $200.00
+Transaction #004: Invalid card 1234 5678 9012 3456 — DECLINED
+
+Customer: Jane Doe
+Email: jane.doe@payments.com
+Phone: (555) 999-0001
