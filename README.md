@@ -5,11 +5,65 @@
   </p>
   <p align="center">
     <a href="https://github.com/taenam1214/redactify/actions/workflows/ci.yml"><img src="https://github.com/taenam1214/redactify/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+    <a href="https://codecov.io/gh/taenam1214/redactify"><img src="https://codecov.io/gh/taenam1214/redactify/branch/main/graph/badge.svg" alt="Coverage"></a>
+    <a href="https://pypi.org/project/redactify/"><img src="https://img.shields.io/pypi/v/redactify.svg" alt="PyPI version"></a>
+    <a href="https://pypi.org/project/redactify/"><img src="https://img.shields.io/pypi/dm/redactify.svg" alt="Downloads"></a>
     <a href="https://www.python.org/downloads/"><img src="https://img.shields.io/badge/python-3.10+-blue.svg" alt="Python 3.10+"></a>
     <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a>
     <a href="https://github.com/taenam1214/redactify/stargazers"><img src="https://img.shields.io/github/stars/taenam1214/redactify?style=social" alt="Stars"></a>
   </p>
 </p>
+
+---
+
+<p align="center">
+  <img src="assets/demo.gif" alt="Redactify demo" width="700">
+  <br>
+  <em>^ Record a demo GIF and place at <code>assets/demo.gif</code></em>
+</p>
+
+---
+
+## Quick Start
+
+### Install
+
+```bash
+pip install redactify
+python -m spacy download en_core_web_sm
+```
+
+For PDF/DOCX support:
+```bash
+pip install redactify[all]
+```
+
+### CLI Usage
+
+```bash
+# Redact a document
+redactify redact document.pdf -o redacted.pdf
+
+# Scan without modifying (report only)
+redactify scan document.txt
+
+# Choose redaction mode
+redactify redact file.txt --mode label
+redactify redact file.txt --mode hash
+redactify redact file.txt --mode blackout
+
+# Select specific PII types
+redactify redact file.txt --detect email,phone,ssn
+
+# Batch process a directory
+redactify redact ./documents/ -o ./redacted/ -r
+
+# Preview without writing (dry run)
+redactify redact file.txt --dry-run
+
+# High-confidence detections only
+redactify redact file.txt --confidence 0.8
+```
 
 ---
 
@@ -64,74 +118,18 @@ Output: "Contact [PERSON] at [EMAIL] or [PHONE]. SSN: [SSN]"
 
 ---
 
-## Quick Start
+## Why Redactify?
 
-### Install
-
-```bash
-pip install redactify
-python -m spacy download en_core_web_sm
-```
-
-For PDF/DOCX support:
-```bash
-pip install redactify[all]
-```
-
-### CLI Usage
-
-```bash
-# Redact a document
-redactify redact document.pdf -o redacted.pdf
-
-# Scan without modifying (report only)
-redactify scan document.txt
-
-# Choose redaction mode
-redactify redact file.txt --mode label
-redactify redact file.txt --mode hash
-redactify redact file.txt --mode blackout
-
-# Select specific PII types
-redactify redact file.txt --detect email,phone,ssn
-
-# Batch process a directory
-redactify redact ./documents/ -o ./redacted/ -r
-
-# Preview without writing (dry run)
-redactify redact file.txt --dry-run
-
-# High-confidence detections only
-redactify redact file.txt --confidence 0.8
-```
-
-### Python API
-
-```python
-from redactify import RedactionEngine, RedactionMode
-
-engine = RedactionEngine(mode=RedactionMode.LABEL)
-
-# Scan for PII
-report = engine.scan("document.txt")
-print(f"Found {report.total_entities} PII entities")
-for pii_type, count in report.entities_by_type.items():
-    print(f"  {pii_type}: {count}")
-
-# Redact
-report = engine.redact("document.txt", output_path="clean.txt")
-```
-
-### Custom Patterns
-
-```python
-engine = RedactionEngine(
-    custom_patterns=[
-        {"name": "medical_record", "pattern": r"MRN-\d{6}"},
-        {"name": "employee_id", "pattern": r"EMP-\d{4}"},
-    ]
-)
-```
+| Feature | Redactify | Presidio | scrubadub |
+|---------|:---------:|:--------:|:---------:|
+| 100% local | ✅ | ✅ | ✅ |
+| Zero config | ✅ | ❌ | ✅ |
+| PDF support | ✅ | ❌ | ❌ |
+| DOCX support | ✅ | ❌ | ❌ |
+| CLI tool | ✅ | ❌ | Limited |
+| Batch processing | ✅ | ❌ | ❌ |
+| Multiple redaction modes | 4 | Custom | 1 |
+| Lightweight install | ~50MB | ~500MB+ | ~30MB |
 
 ---
 
@@ -158,6 +156,36 @@ engine = RedactionEngine(
 | `label` | `[EMAIL]` | Readable output, training data |
 | `hash` | `[REDACTED-a1b2c3d4]` | Preserving referential integrity |
 | `custom` | `[REMOVED]` | Custom compliance requirements |
+
+---
+
+## Python API
+
+```python
+from redactify import RedactionEngine, RedactionMode
+
+engine = RedactionEngine(mode=RedactionMode.LABEL)
+
+# Scan for PII
+report = engine.scan("document.txt")
+print(f"Found {report.total_entities} PII entities")
+for pii_type, count in report.entities_by_type.items():
+    print(f"  {pii_type}: {count}")
+
+# Redact
+report = engine.redact("document.txt", output_path="clean.txt")
+```
+
+### Custom Patterns
+
+```python
+engine = RedactionEngine(
+    custom_patterns=[
+        {"name": "medical_record", "pattern": r"MRN-\d{6}"},
+        {"name": "employee_id", "pattern": r"EMP-\d{4}"},
+    ]
+)
+```
 
 ---
 
