@@ -12,18 +12,27 @@ requires-python = ">=3.10"
 authors = [
     { name = "taenam1214" },
 ]
-keywords = ["privacy", "redaction", "pii", "document", "security"]
+keywords = [
+    "privacy", "redaction", "pii", "document", "security",
+    "pdf", "docx", "anonymization", "gdpr", "hipaa",
+    "nlp", "ner", "spacy", "cli", "data-protection",
+    "text-processing", "personally-identifiable-information",
+]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
+    "Intended Audience :: Healthcare Industry",
     "Intended Audience :: Legal Industry",
     "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Topic :: Security",
     "Topic :: Text Processing",
+    "Topic :: Text Processing :: Filters",
+    "Typing :: Typed",
 ]
 dependencies = [
     "click>=8.0",
@@ -35,7 +44,7 @@ pdf = ["PyMuPDF>=1.22"]
 docx = ["python-docx>=0.8"]
 ocr = ["pytesseract>=0.3", "Pillow>=9.0"]
 all = ["PyMuPDF>=1.22", "python-docx>=0.8", "pytesseract>=0.3", "Pillow>=9.0"]
-dev = ["pytest>=7.0", "ruff>=0.1"]
+dev = ["pytest>=7.0", "pytest-cov>=4.0", "ruff>=0.1"]
 
 [project.scripts]
 redactify = "redactify.cli:main"
@@ -44,6 +53,8 @@ redactify = "redactify.cli:main"
 Homepage = "https://github.com/taenam1214/redactify"
 Repository = "https://github.com/taenam1214/redactify"
 Issues = "https://github.com/taenam1214/redactify/issues"
+Documentation = "https://github.com/taenam1214/redactify#quick-start"
+Changelog = "https://github.com/taenam1214/redactify/blob/main/CHANGELOG.md"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/redactify"]
