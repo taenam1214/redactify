@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [0.1.0] - Unreleased
+## [0.1.0] - 2025-06-01
 
 ### Added
 - Core redaction engine with scan and redact operations
