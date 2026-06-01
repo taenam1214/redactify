@@ -13,9 +13,9 @@ Target audience: developers, lawyers, doctors, HR, journalists, and everyday peo
 - **Multi-language**: Start with English, expand internationally.
 
 ## Git Conventions
-- Micro-commits: every meaningful change gets its own commit (~100 total).
+- **Microcommits**: split all work into as many small, focused commits as possible. One logical change per commit. Never bundle unrelated changes.
 - Commit messages: short, imperative, descriptive (e.g., "add email regex detector").
-- Do NOT add Co-Authored-By lines. Commits are authored solely by the user.
+- **NEVER** add Co-Authored-By lines. Commits are authored solely by the user. No exceptions.
 
 ## Tech Stack (Planned)
 - **Language**: Python 3.10+
