@@ -15,7 +15,7 @@ from redactify.detectors.regex import (
     PhoneDetector,
     SSNDetector,
 )
-from redactify.parsers.base import BaseParser, ParsedDocument
+from redactify.parsers.base import BaseParser
 from redactify.parsers.text import TextParser
 from redactify.reporters.base import RedactionReport
 
