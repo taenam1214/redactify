@@ -47,7 +47,7 @@ class TestRedactionEngine:
     def test_redact_label_mode(self):
         path = self._create_temp_file("Email: john@example.com")
         engine = RedactionEngine(mode=RedactionMode.LABEL, use_ner=False)
-        report = engine.redact(path)
+        engine.redact(path)
         output_path = path.parent / f"{path.stem}.redacted{path.suffix}"
         content = output_path.read_text()
         assert "[EMAIL]" in content
