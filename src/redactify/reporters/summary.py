@@ -14,7 +14,7 @@ class SummaryReporter(BaseReporter):
         """Generate a summary for multiple reports."""
         lines = []
         lines.append(f"{'=' * 50}")
-        lines.append(f"  Batch Summary")
+        lines.append("  Batch Summary")
         lines.append(f"{'=' * 50}")
 
         total_files = len(results)
