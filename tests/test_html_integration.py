@@ -18,7 +18,7 @@ class TestHTMLIntegration:
     def test_redact_html_file(self, tmp_path):
         output = tmp_path / "redacted.html"
         engine = RedactionEngine(mode=RedactionMode.LABEL, use_ner=False)
-        report = engine.redact(FIXTURES / "sample_page.html", output_path=output)
+        engine.redact(FIXTURES / "sample_page.html", output_path=output)
         assert output.exists()
         content = output.read_text()
         assert "sarah.johnson@company.com" not in content
