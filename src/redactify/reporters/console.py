@@ -9,7 +9,7 @@ class ConsoleReporter(BaseReporter):
     def report(self, result: RedactionReport) -> str:
         lines = []
         lines.append(f"{'=' * 50}")
-        lines.append(f"  Redactify Report")
+        lines.append("  Redactify Report")
         lines.append(f"{'=' * 50}")
         lines.append(f"  File:     {result.source_file}")
         lines.append(f"  Redacted: {'Yes' if result.redacted else 'No (scan only)'}")
