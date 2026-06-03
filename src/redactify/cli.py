@@ -92,7 +92,8 @@ def redact(file: Path, output: Path | None, mode: str, detect: str | None, no_ne
 @click.option("-r", "--recursive", is_flag=True, help="Scan directories recursively.")
 @click.option("--format", "report_format", type=click.Choice(["console", "json"]), default="console")
 @click.option("--json", "use_json", is_flag=True, help="Output results as JSON (shorthand for --format json).")
-def scan(file: Path, detect: str | None, no_ner: bool, confidence: float, recursive: bool, report_format: str, use_json: bool):
+@click.option("--strict", is_flag=True, help="Exit with code 1 if any PII is detected.")
+def scan(file: Path, detect: str | None, no_ner: bool, confidence: float, recursive: bool, report_format: str, use_json: bool, strict: bool):
     """Scan a document or directory for PII without redacting."""
     detect_types = _parse_detect_types(detect)
 
@@ -112,8 +113,11 @@ def scan(file: Path, detect: str | None, no_ner: bool, confidence: float, recurs
         total = sum(r.total_entities for r in reports)
         click.echo(f"\n  Scanned {len(reports)} files. Total PII found: {total}")
     else:
-        report = engine.scan(file)
-        click.echo(reporter.report(report))
+        reports = [engine.scan(file)]
+        click.echo(reporter.report(reports[0]))
+
+    if strict and any(r.total_entities > 0 for r in reports):
+        sys.exit(1)
 
 
 @main.command()
