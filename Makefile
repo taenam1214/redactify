@@ -1,4 +1,4 @@
-.PHONY: install dev test lint format clean build
+.PHONY: install dev test coverage lint format clean build
 
 install:
 	pip install -e .
@@ -10,6 +10,10 @@ dev:
 
 test:
 	pytest tests/ -v
+
+coverage:
+	pytest tests/ -v --cov=redactify --cov-report=html --cov-report=term
+	@echo "\n  HTML report: htmlcov/index.html"
 
 lint:
 	ruff check src/ tests/
