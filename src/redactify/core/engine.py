@@ -187,6 +187,71 @@ class RedactionEngine:
             redacted=True,
         )
 
+    def scan_streaming(self, file_path: Path) -> RedactionReport:
+        """Scan a file for PII using streaming (low memory usage).
+
+        Only works with text-based files. Processes in chunks without
+        loading the entire file into memory.
+
+        Args:
+            file_path: Path to the text file to scan.
+
+        Returns:
+            A RedactionReport with detected entities.
+        """
+        file_path = Path(file_path)
+        all_entities = stream_scan(
+            file_path, self.detector, self.confidence_threshold
+        )
+
+        entities_by_type: dict[str, int] = {}
+        for entity in all_entities:
+            key = entity.pii_type.value
+            entities_by_type[key] = entities_by_type.get(key, 0) + 1
+
+        return RedactionReport(
+            source_file=file_path,
+            total_entities=len(all_entities),
+            entities_by_type=entities_by_type,
+            entities=all_entities,
+            redacted=False,
+        )
+
+    def redact_streaming(self, file_path: Path, output_path: Path | None = None) -> RedactionReport:
+        """Redact PII from a file using streaming (low memory usage).
+
+        Only works with text-based files. Processes in chunks, writing
+        output incrementally without loading the entire file into memory.
+
+        Args:
+            file_path: Path to the input text file.
+            output_path: Path for the redacted output.
+
+        Returns:
+            A RedactionReport summarizing what was redacted.
+        """
+        file_path = Path(file_path)
+        if output_path is None:
+            output_path = file_path.parent / f"{file_path.stem}.redacted{file_path.suffix}"
+        output_path = Path(output_path)
+
+        all_entities = stream_redact(
+            file_path, output_path, self.detector, self.redactor, self.confidence_threshold
+        )
+
+        entities_by_type: dict[str, int] = {}
+        for entity in all_entities:
+            key = entity.pii_type.value
+            entities_by_type[key] = entities_by_type.get(key, 0) + 1
+
+        return RedactionReport(
+            source_file=file_path,
+            total_entities=len(all_entities),
+            entities_by_type=entities_by_type,
+            entities=all_entities,
+            redacted=True,
+        )
+
     def _iter_files(self, directory: Path, recursive: bool = False):
         """Iterate over supported files in a directory."""
         if recursive:
