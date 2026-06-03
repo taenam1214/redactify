@@ -2,6 +2,7 @@
 
 from pathlib import Path
 
+from redactify.core.audit import AuditTrail
 from redactify.core.detector import PIIEntity, PIIType
 from redactify.core.filters import filter_by_confidence
 from redactify.core.redactor import Redactor, RedactionMode
