@@ -260,12 +260,12 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 - [x] Custom pattern definitions via config
 - [x] Dry-run mode
 - [x] Confidence threshold filtering
+- [x] Pre-commit hook integration
+- [x] Streaming support for large files
+- [x] Redaction audit trail
 - [ ] OCR support (images with text)
 - [ ] Local web UI (drag-and-drop)
 - [ ] Multi-language NER models
-- [ ] Pre-commit hook integration
-- [ ] Streaming support for large files
-- [ ] Redaction audit trail
 
 ---
 
