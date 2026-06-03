@@ -2,11 +2,13 @@
 
 __version__ = "0.1.0"
 
+from redactify.core.audit import AuditTrail
 from redactify.core.detector import PIIEntity, PIIType
 from redactify.core.engine import RedactionEngine
 from redactify.core.redactor import RedactionMode, Redactor
 
 __all__ = [
+    "AuditTrail",
     "PIIEntity",
     "PIIType",
     "RedactionEngine",
