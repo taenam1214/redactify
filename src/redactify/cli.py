@@ -107,7 +107,8 @@ def redact(file: Path, output: Path | None, mode: str, detect: str | None, no_ne
 @click.option("--format", "report_format", type=click.Choice(["console", "json"]), default="console")
 @click.option("--json", "use_json", is_flag=True, help="Output results as JSON (shorthand for --format json).")
 @click.option("--strict", is_flag=True, help="Exit with code 1 if any PII is detected.")
-def scan(file: Path, detect: str | None, no_ner: bool, confidence: float, recursive: bool, report_format: str, use_json: bool, strict: bool):
+@click.option("--stream", is_flag=True, help="Use streaming mode for large text files (low memory).")
+def scan(file: Path, detect: str | None, no_ner: bool, confidence: float, recursive: bool, report_format: str, use_json: bool, strict: bool, stream: bool):
     """Scan a document or directory for PII without redacting."""
     detect_types = _parse_detect_types(detect)
 
@@ -126,6 +127,9 @@ def scan(file: Path, detect: str | None, no_ner: bool, confidence: float, recurs
             click.echo("")
         total = sum(r.total_entities for r in reports)
         click.echo(f"\n  Scanned {len(reports)} files. Total PII found: {total}")
+    elif stream:
+        reports = [engine.scan_streaming(file)]
+        click.echo(reporter.report(reports[0]))
     else:
         reports = [engine.scan(file)]
         click.echo(reporter.report(reports[0]))
