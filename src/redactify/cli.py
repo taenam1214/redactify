@@ -42,7 +42,8 @@ def main():
 @click.option("-r", "--recursive", is_flag=True, help="Process directories recursively.")
 @click.option("--dry-run", is_flag=True, help="Preview what would be redacted without writing files.")
 @click.option("--format", "report_format", type=click.Choice(["console", "json"]), default="console")
-def redact(file: Path, output: Path | None, mode: str, detect: str | None, no_ner: bool, confidence: float, recursive: bool, dry_run: bool, report_format: str):
+@click.option("--json", "use_json", is_flag=True, help="Output results as JSON (shorthand for --format json).")
+def redact(file: Path, output: Path | None, mode: str, detect: str | None, no_ner: bool, confidence: float, recursive: bool, dry_run: bool, report_format: str, use_json: bool):
     """Redact PII from a document or directory."""
     detect_types = _parse_detect_types(detect)
     redaction_mode = RedactionMode(mode)
@@ -54,7 +55,7 @@ def redact(file: Path, output: Path | None, mode: str, detect: str | None, no_ne
         confidence_threshold=confidence,
     )
 
-    reporter = JSONReporter() if report_format == "json" else ConsoleReporter()
+    reporter = JSONReporter() if (use_json or report_format == "json") else ConsoleReporter()
 
     if dry_run:
         # Dry run: scan only, show what would be redacted
@@ -89,7 +90,8 @@ def redact(file: Path, output: Path | None, mode: str, detect: str | None, no_ne
 @click.option("--confidence", type=float, default=0.0, help="Minimum confidence threshold (0.0-1.0).")
 @click.option("-r", "--recursive", is_flag=True, help="Scan directories recursively.")
 @click.option("--format", "report_format", type=click.Choice(["console", "json"]), default="console")
-def scan(file: Path, detect: str | None, no_ner: bool, confidence: float, recursive: bool, report_format: str):
+@click.option("--json", "use_json", is_flag=True, help="Output results as JSON (shorthand for --format json).")
+def scan(file: Path, detect: str | None, no_ner: bool, confidence: float, recursive: bool, report_format: str, use_json: bool):
     """Scan a document or directory for PII without redacting."""
     detect_types = _parse_detect_types(detect)
 
@@ -99,7 +101,7 @@ def scan(file: Path, detect: str | None, no_ner: bool, confidence: float, recurs
         confidence_threshold=confidence,
     )
 
-    reporter = JSONReporter() if report_format == "json" else ConsoleReporter()
+    reporter = JSONReporter() if (use_json or report_format == "json") else ConsoleReporter()
 
     if file.is_dir():
         reports = engine.scan_directory(file, recursive=recursive)
