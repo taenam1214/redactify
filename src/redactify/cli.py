@@ -46,7 +46,8 @@ def main():
 @click.option("--json", "use_json", is_flag=True, help="Output results as JSON (shorthand for --format json).")
 @click.option("--strict", is_flag=True, help="Exit with code 1 if any PII is detected.")
 @click.option("--stream", is_flag=True, help="Use streaming mode for large text files (low memory).")
-def redact(file: Path, output: Path | None, mode: str, detect: str | None, no_ner: bool, confidence: float, recursive: bool, dry_run: bool, report_format: str, use_json: bool, strict: bool, stream: bool):
+@click.option("--audit", "audit_path", type=click.Path(path_type=Path), default=None, help="Write a JSON audit trail to this path.")
+def redact(file: Path, output: Path | None, mode: str, detect: str | None, no_ner: bool, confidence: float, recursive: bool, dry_run: bool, report_format: str, use_json: bool, strict: bool, stream: bool, audit_path: Path | None):
     """Redact PII from a document or directory."""
     detect_types = _parse_detect_types(detect)
     redaction_mode = RedactionMode(mode)
@@ -81,18 +82,21 @@ def redact(file: Path, output: Path | None, mode: str, detect: str | None, no_ne
         out_dir = output or file / "redacted"
         click.echo(f"\n  {len(reports)} files redacted to: {out_dir}")
     elif stream:
-        report = engine.redact_streaming(file, output_path=output)
+        report = engine.redact_streaming(file, output_path=output, audit_path=audit_path)
         reports = [report]
         click.echo(reporter.report(report))
         out_path = output or file.parent / f"{file.stem}.redacted{file.suffix}"
         click.echo(f"\n  Output written to: {out_path}")
     else:
-        report = engine.redact(file, output_path=output)
+        report = engine.redact(file, output_path=output, audit_path=audit_path)
         reports = [report]
         click.echo(reporter.report(report))
         if report.redacted:
             out_path = output or file.parent / f"{file.stem}.redacted{file.suffix}"
             click.echo(f"\n  Output written to: {out_path}")
+
+    if audit_path and not file.is_dir():
+        click.echo(f"  Audit trail written to: {audit_path}")
 
     if strict and any(r.total_entities > 0 for r in reports):
         sys.exit(1)
