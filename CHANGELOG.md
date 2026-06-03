@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+### Added
+- `--strict` flag for scan and redact: exit code 1 when PII is detected (CI/pre-commit)
+- `--stream` flag for scan and redact: low-memory chunked processing for large files
+- `--audit` flag for redact: write JSON audit trail of redactions
+- `--json` shorthand flag for scan and redact
+- Pre-commit hook configuration (`.pre-commit-hooks.yaml`)
+- Streaming processor (`core/streaming.py`) for line-based chunked I/O
+- `AuditTrail` model with hashed PII references (no PII in output)
+- `make coverage` target for local HTML coverage reports
+
 ## [0.1.0] - 2025-06-01
 
 ### Added
