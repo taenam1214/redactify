@@ -44,7 +44,8 @@ def main():
 @click.option("--dry-run", is_flag=True, help="Preview what would be redacted without writing files.")
 @click.option("--format", "report_format", type=click.Choice(["console", "json"]), default="console")
 @click.option("--json", "use_json", is_flag=True, help="Output results as JSON (shorthand for --format json).")
-def redact(file: Path, output: Path | None, mode: str, detect: str | None, no_ner: bool, confidence: float, recursive: bool, dry_run: bool, report_format: str, use_json: bool):
+@click.option("--strict", is_flag=True, help="Exit with code 1 if any PII is detected.")
+def redact(file: Path, output: Path | None, mode: str, detect: str | None, no_ner: bool, confidence: float, recursive: bool, dry_run: bool, report_format: str, use_json: bool, strict: bool):
     """Redact PII from a document or directory."""
     detect_types = _parse_detect_types(detect)
     redaction_mode = RedactionMode(mode)
@@ -78,10 +79,14 @@ def redact(file: Path, output: Path | None, mode: str, detect: str | None, no_ne
         click.echo(f"\n  {len(reports)} files redacted to: {out_dir}")
     else:
         report = engine.redact(file, output_path=output)
+        reports = [report]
         click.echo(reporter.report(report))
         if report.redacted:
             out_path = output or file.parent / f"{file.stem}.redacted{file.suffix}"
             click.echo(f"\n  Output written to: {out_path}")
+
+    if strict and any(r.total_entities > 0 for r in reports):
+        sys.exit(1)
 
 
 @main.command()
