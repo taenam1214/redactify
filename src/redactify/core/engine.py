@@ -141,12 +141,15 @@ class RedactionEngine:
             redacted=False,
         )
 
-    def redact(self, file_path: Path, output_path: Path | None = None) -> RedactionReport:
+    def redact(
+        self, file_path: Path, output_path: Path | None = None, audit_path: Path | None = None
+    ) -> RedactionReport:
         """Redact PII from a file and write the result.
 
         Args:
             file_path: Path to the input file.
             output_path: Path for the redacted output. Defaults to <name>.redacted.<ext>.
+            audit_path: If provided, write a JSON audit trail to this path.
 
         Returns:
             A RedactionReport summarizing what was redacted.
@@ -174,6 +177,11 @@ class RedactionEngine:
 
         output_path = Path(output_path)
         output_path.write_text("\n".join(redacted_chunks), encoding="utf-8")
+
+        # Write audit trail if requested
+        if audit_path:
+            trail = AuditTrail.create(file_path, all_entities, self.redactor.mode.value)
+            trail.write(audit_path)
 
         entities_by_type: dict[str, int] = {}
         for entity in all_entities:
