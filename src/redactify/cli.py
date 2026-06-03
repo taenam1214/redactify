@@ -45,7 +45,8 @@ def main():
 @click.option("--format", "report_format", type=click.Choice(["console", "json"]), default="console")
 @click.option("--json", "use_json", is_flag=True, help="Output results as JSON (shorthand for --format json).")
 @click.option("--strict", is_flag=True, help="Exit with code 1 if any PII is detected.")
-def redact(file: Path, output: Path | None, mode: str, detect: str | None, no_ner: bool, confidence: float, recursive: bool, dry_run: bool, report_format: str, use_json: bool, strict: bool):
+@click.option("--stream", is_flag=True, help="Use streaming mode for large text files (low memory).")
+def redact(file: Path, output: Path | None, mode: str, detect: str | None, no_ner: bool, confidence: float, recursive: bool, dry_run: bool, report_format: str, use_json: bool, strict: bool, stream: bool):
     """Redact PII from a document or directory."""
     detect_types = _parse_detect_types(detect)
     redaction_mode = RedactionMode(mode)
@@ -63,6 +64,8 @@ def redact(file: Path, output: Path | None, mode: str, detect: str | None, no_ne
         # Dry run: scan only, show what would be redacted
         if file.is_dir():
             reports = engine.scan_directory(file, recursive=recursive)
+        elif stream:
+            reports = [engine.scan_streaming(file)]
         else:
             reports = [engine.scan(file)]
         for report in reports:
@@ -77,6 +80,12 @@ def redact(file: Path, output: Path | None, mode: str, detect: str | None, no_ne
             click.echo("")
         out_dir = output or file / "redacted"
         click.echo(f"\n  {len(reports)} files redacted to: {out_dir}")
+    elif stream:
+        report = engine.redact_streaming(file, output_path=output)
+        reports = [report]
+        click.echo(reporter.report(report))
+        out_path = output or file.parent / f"{file.stem}.redacted{file.suffix}"
+        click.echo(f"\n  Output written to: {out_path}")
     else:
         report = engine.redact(file, output_path=output)
         reports = [report]
