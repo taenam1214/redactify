@@ -1,7 +1,7 @@
 - id: redactify-scan
   name: Scan for PII
   description: Detect personally identifiable information in staged files.
-  entry: redactify scan --no-ner
+  entry: redactify scan --no-ner --strict
   language: python
   types: [text]
   additional_dependencies: ["redactify"]
