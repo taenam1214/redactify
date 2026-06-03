@@ -15,6 +15,7 @@ from redactify.detectors.regex import (
     PhoneDetector,
     SSNDetector,
 )
+from redactify.core.streaming import stream_redact, stream_scan
 from redactify.parsers.base import BaseParser
 from redactify.parsers.text import TextParser
 from redactify.reporters.base import RedactionReport
