@@ -1,5 +1,6 @@
 """Redactify CLI — command-line interface."""
 
+import sys
 from pathlib import Path
 
 import click
