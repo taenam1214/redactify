@@ -191,6 +191,64 @@ class MACAddressDetector(BaseDetector):
         return [PIIType.MAC_ADDRESS]
 
 
+class IPv6Detector(BaseDetector):
+    """Detects IPv6 addresses in full and abbreviated formats."""
+
+    # Full form: 8 groups of 4 hex digits separated by colons
+    # Abbreviated: contains :: for zero compression
+    # Requires at least two colon-separated hex groups to avoid matching
+    # short hex strings. Uses negative lookbehind/lookahead to avoid
+    # matching inside MAC addresses (which use single-octet hex groups).
+    PATTERN = re.compile(
+        r"(?<![0-9A-Fa-f]:)"  # not preceded by hex:
+        r"\b("
+        # Full 8-group form
+        r"(?:[0-9A-Fa-f]{1,4}:){7}[0-9A-Fa-f]{1,4}"
+        r"|"
+        # :: at the start
+        r"::(?:[0-9A-Fa-f]{1,4}:){0,5}[0-9A-Fa-f]{1,4}"
+        r"|"
+        # :: at the end
+        r"(?:[0-9A-Fa-f]{1,4}:){1,6}:"
+        r"|"
+        # :: in the middle
+        r"(?:[0-9A-Fa-f]{1,4}:){1,5}:[0-9A-Fa-f]{1,4}"
+        r"|"
+        r"(?:[0-9A-Fa-f]{1,4}:){1,4}(?::[0-9A-Fa-f]{1,4}){1,2}"
+        r"|"
+        r"(?:[0-9A-Fa-f]{1,4}:){1,3}(?::[0-9A-Fa-f]{1,4}){1,3}"
+        r"|"
+        r"(?:[0-9A-Fa-f]{1,4}:){1,2}(?::[0-9A-Fa-f]{1,4}){1,4}"
+        r"|"
+        r"[0-9A-Fa-f]{1,4}:(?::[0-9A-Fa-f]{1,4}){1,5}"
+        r"|"
+        # Loopback
+        r"::1"
+        r"|"
+        # Unspecified
+        r"::"
+        r")\b"
+        r"(?!:[0-9A-Fa-f])"  # not followed by :hex
+    )
+
+    def detect(self, text: str) -> list[PIIEntity]:
+        entities = []
+        for match in self.PATTERN.finditer(text):
+            entities.append(
+                PIIEntity(
+                    text=match.group(),
+                    pii_type=PIIType.IPV6,
+                    start=match.start(),
+                    end=match.end(),
+                )
+            )
+        return entities
+
+    @property
+    def supported_types(self) -> list[PIIType]:
+        return [PIIType.IPV6]
+
+
 class DateOfBirthDetector(BaseDetector):
     """Detects dates that may be dates of birth based on context."""
 
