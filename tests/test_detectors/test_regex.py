@@ -254,3 +254,37 @@ class TestDriversLicenseDetectorBasic:
         entities = self.detector.detect(text)
         assert len(entities) >= 1
         assert entities[0].confidence == 0.8
+
+
+class TestDriversLicenseDetectorStateFormats:
+    """Test detection of state-specific DL formats."""
+
+    def setup_method(self):
+        self.detector = DriversLicenseDetector()
+
+    def test_washington_wdl_prefix(self):
+        text = "Driver's license WDL123ABC4567"
+        entities = self.detector.detect(text)
+        assert len(entities) >= 1
+        assert any("WDL" in e.text for e in entities)
+
+    def test_illinois_format(self):
+        # 1 letter + 11 digits
+        text = "License: B12345678901"
+        entities = self.detector.detect(text)
+        assert len(entities) >= 1
+
+    def test_multiple_formats_in_one_text(self):
+        text = "Driver's license D1234567, also DL# AB123456"
+        entities = self.detector.detect(text)
+        assert len(entities) >= 2
+
+    def test_case_insensitive_context(self):
+        text = "DRIVER'S LICENSE: D1234567"
+        entities = self.detector.detect(text)
+        assert len(entities) >= 1
+
+    def test_dl_abbreviation_context(self):
+        text = "DL D1234567"
+        entities = self.detector.detect(text)
+        assert len(entities) >= 1
