@@ -1,0 +1,9 @@
+DMV records:
+- Driver's license: D1234567 (California)
+- DL# F123456789012 (Florida)
+- License number: AB123456 (Ohio)
+- DL: WDL123ABC4567 (Washington)
+- Driver's license no: 12345678 (Texas)
+
+This sentence has no license numbers.
+Random string without context: D1234567 should not match.
