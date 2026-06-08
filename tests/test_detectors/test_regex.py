@@ -6,6 +6,7 @@ from redactify.detectors.regex import (
     DateOfBirthDetector,
     EmailDetector,
     IPAddressDetector,
+    MACAddressDetector,
     PhoneDetector,
     SSNDetector,
 )
@@ -117,6 +118,48 @@ class TestIPAddressDetector:
         text = "From 10.0.0.1 to 172.16.0.1"
         entities = self.detector.detect(text)
         assert len(entities) == 2
+
+
+class TestMACAddressDetector:
+    def setup_method(self):
+        self.detector = MACAddressDetector()
+
+    def test_detects_colon_format(self):
+        entities = self.detector.detect("NIC: 00:1A:2B:3C:4D:5E")
+        assert len(entities) == 1
+        assert entities[0].text == "00:1A:2B:3C:4D:5E"
+        assert entities[0].pii_type == PIIType.MAC_ADDRESS
+
+    def test_detects_dash_format(self):
+        entities = self.detector.detect("MAC: AA-BB-CC-DD-EE-FF")
+        assert len(entities) == 1
+        assert entities[0].text == "AA-BB-CC-DD-EE-FF"
+
+    def test_detects_cisco_dot_format(self):
+        entities = self.detector.detect("Interface: 0011.2233.4455")
+        assert len(entities) == 1
+        assert entities[0].text == "0011.2233.4455"
+
+    def test_detects_multiple_macs(self):
+        text = "From 00:1A:2B:3C:4D:5E to AA-BB-CC-DD-EE-FF"
+        entities = self.detector.detect(text)
+        assert len(entities) == 2
+
+    def test_detects_lowercase(self):
+        entities = self.detector.detect("mac: aa:bb:cc:dd:ee:ff")
+        assert len(entities) == 1
+
+    def test_no_false_positive_on_plain_text(self):
+        entities = self.detector.detect("This is just a normal sentence.")
+        assert len(entities) == 0
+
+    def test_rejects_partial_mac(self):
+        entities = self.detector.detect("Partial: 00:1A:2B")
+        assert len(entities) == 0
+
+    def test_rejects_invalid_hex(self):
+        entities = self.detector.detect("Bad: ZZ:ZZ:ZZ:ZZ:ZZ:ZZ")
+        assert len(entities) == 0
 
 
 class TestDateOfBirthDetector:
