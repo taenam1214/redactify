@@ -160,6 +160,37 @@ class IPAddressDetector(BaseDetector):
         return [PIIType.IP_ADDRESS]
 
 
+class MACAddressDetector(BaseDetector):
+    """Detects MAC addresses in common formats."""
+
+    PATTERN = re.compile(
+        r"\b(?:"
+        r"[0-9A-Fa-f]{2}(?::[0-9A-Fa-f]{2}){5}"  # AA:BB:CC:DD:EE:FF
+        r"|"
+        r"[0-9A-Fa-f]{2}(?:-[0-9A-Fa-f]{2}){5}"  # AA-BB-CC-DD-EE-FF
+        r"|"
+        r"[0-9A-Fa-f]{4}(?:\.[0-9A-Fa-f]{4}){2}"  # AABB.CCDD.EEFF (Cisco)
+        r")\b"
+    )
+
+    def detect(self, text: str) -> list[PIIEntity]:
+        entities = []
+        for match in self.PATTERN.finditer(text):
+            entities.append(
+                PIIEntity(
+                    text=match.group(),
+                    pii_type=PIIType.MAC_ADDRESS,
+                    start=match.start(),
+                    end=match.end(),
+                )
+            )
+        return entities
+
+    @property
+    def supported_types(self) -> list[PIIType]:
+        return [PIIType.MAC_ADDRESS]
+
+
 class DateOfBirthDetector(BaseDetector):
     """Detects dates that may be dates of birth based on context."""
 
