@@ -288,3 +288,37 @@ class TestDriversLicenseDetectorStateFormats:
         text = "DL D1234567"
         entities = self.detector.detect(text)
         assert len(entities) >= 1
+
+
+class TestDriversLicenseDetectorNegative:
+    """Test that the DL detector avoids false positives."""
+
+    def setup_method(self):
+        self.detector = DriversLicenseDetector()
+
+    def test_no_match_without_context(self):
+        # Same pattern as CA DL, but no license context keywords
+        text = "Product code D1234567 is in stock."
+        entities = self.detector.detect(text)
+        assert len(entities) == 0
+
+    def test_no_match_on_plain_sentence(self):
+        entities = self.detector.detect("This is a totally normal sentence.")
+        assert len(entities) == 0
+
+    def test_no_match_random_digits(self):
+        text = "The year 2024 and temperature 72 degrees."
+        entities = self.detector.detect(text)
+        assert len(entities) == 0
+
+    def test_no_match_short_numbers_without_context(self):
+        text = "Order #12345678 confirmed."
+        entities = self.detector.detect(text)
+        assert len(entities) == 0
+
+    def test_no_duplicate_entities(self):
+        # Ensure overlapping patterns don't produce duplicates
+        text = "License: D1234567"
+        entities = self.detector.detect(text)
+        starts = [(e.start, e.end) for e in entities]
+        assert len(starts) == len(set(starts))
