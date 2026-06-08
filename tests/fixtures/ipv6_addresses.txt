@@ -1,0 +1,9 @@
+Network configuration:
+- Primary DNS: 2001:0db8:85a3:0000:0000:8a2e:0370:7334
+- Secondary DNS: fe80::1
+- Loopback: ::1
+- Gateway: 2001:db8::1
+- Full address: 2001:0db8:0000:0042:0000:8a2e:0370:7334
+- Link-local: fe80::200:5eff:fe00:5312
+This line has no IPv6 addresses.
+Unspecified address: ::
