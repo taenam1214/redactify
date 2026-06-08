@@ -6,6 +6,7 @@ from redactify.detectors.regex import (
     DateOfBirthDetector,
     EmailDetector,
     IPAddressDetector,
+    IPv6Detector,
     MACAddressDetector,
     PhoneDetector,
     SSNDetector,
@@ -118,6 +119,44 @@ class TestIPAddressDetector:
         text = "From 10.0.0.1 to 172.16.0.1"
         entities = self.detector.detect(text)
         assert len(entities) == 2
+
+
+class TestIPv6Detector:
+    def setup_method(self):
+        self.detector = IPv6Detector()
+
+    def test_detects_full_ipv6(self):
+        entities = self.detector.detect("Address: 2001:0db8:85a3:0000:0000:8a2e:0370:7334")
+        assert len(entities) == 1
+        assert entities[0].text == "2001:0db8:85a3:0000:0000:8a2e:0370:7334"
+        assert entities[0].pii_type == PIIType.IPV6
+
+    def test_detects_abbreviated_ipv6(self):
+        entities = self.detector.detect("Gateway: 2001:db8::1")
+        assert len(entities) == 1
+
+    def test_detects_loopback(self):
+        entities = self.detector.detect("Loopback: ::1")
+        assert len(entities) == 1
+        assert entities[0].text == "::1"
+
+    def test_detects_link_local(self):
+        entities = self.detector.detect("Link-local: fe80::200:5eff:fe00:5312")
+        assert len(entities) == 1
+
+    def test_detects_multiple_ipv6(self):
+        text = "From 2001:db8::1 to 2001:db8::2"
+        entities = self.detector.detect(text)
+        assert len(entities) == 2
+
+    def test_no_false_positive_on_plain_text(self):
+        entities = self.detector.detect("This is just a normal sentence.")
+        assert len(entities) == 0
+
+    def test_does_not_match_mac_address(self):
+        # MAC addresses use different format - should not trigger IPv6
+        entities = self.detector.detect("MAC: 00:1A:2B:3C:4D:5E")
+        assert len(entities) == 0
 
 
 class TestMACAddressDetector:
