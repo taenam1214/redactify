@@ -3,6 +3,9 @@
 import tempfile
 from pathlib import Path
 
+import pytest
+
+from redactify.core.detector import PIIType
 from redactify.core.engine import RedactionEngine
 from redactify.core.redactor import RedactionMode
 
@@ -71,3 +74,45 @@ class TestRedactionEngine:
         report = engine.scan(path)
         assert report.total_entities == 0
         path.unlink()
+
+
+class TestStringArgCoercion:
+    """Test that string arguments are properly coerced to enums."""
+
+    def test_mode_as_string(self):
+        engine = RedactionEngine(mode="label", use_ner=False)
+        assert engine.redactor.mode == RedactionMode.LABEL
+
+    def test_mode_as_string_case_insensitive(self):
+        engine = RedactionEngine(mode="BLACKOUT", use_ner=False)
+        assert engine.redactor.mode == RedactionMode.BLACKOUT
+
+    def test_mode_as_enum_still_works(self):
+        engine = RedactionEngine(mode=RedactionMode.HASH, use_ner=False)
+        assert engine.redactor.mode == RedactionMode.HASH
+
+    def test_invalid_mode_string_raises(self):
+        with pytest.raises(ValueError):
+            RedactionEngine(mode="invalid", use_ner=False)
+
+    def test_detect_types_as_strings(self):
+        engine = RedactionEngine(detect_types=["email", "phone"], use_ner=False)
+        supported = engine.detector.supported_types
+        assert PIIType.EMAIL in supported
+        assert PIIType.PHONE in supported
+
+    def test_detect_types_mixed(self):
+        engine = RedactionEngine(detect_types=[PIIType.EMAIL, "phone"], use_ner=False)
+        supported = engine.detector.supported_types
+        assert PIIType.EMAIL in supported
+        assert PIIType.PHONE in supported
+
+    def test_detect_types_case_insensitive(self):
+        engine = RedactionEngine(detect_types=["EMAIL", "SSN"], use_ner=False)
+        supported = engine.detector.supported_types
+        assert PIIType.EMAIL in supported
+        assert PIIType.SSN in supported
+
+    def test_invalid_detect_type_string_raises(self):
+        with pytest.raises(ValueError):
+            RedactionEngine(detect_types=["not_a_type"], use_ner=False)

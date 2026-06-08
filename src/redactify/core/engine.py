@@ -27,13 +27,15 @@ class RedactionEngine:
 
     def __init__(
         self,
-        mode: RedactionMode = RedactionMode.BLACKOUT,
+        mode: RedactionMode | str = RedactionMode.BLACKOUT,
         custom_string: str = "[REDACTED]",
-        detect_types: list[PIIType] | None = None,
+        detect_types: list[PIIType | str] | None = None,
         use_ner: bool = True,
         custom_patterns: list[dict] | None = None,
         confidence_threshold: float = 0.0,
     ):
+        mode = self._coerce_mode(mode)
+        detect_types = self._coerce_detect_types(detect_types)
         self.redactor = Redactor(mode=mode, custom_string=custom_string)
         self.detector = self._build_detector(detect_types, use_ner, custom_patterns)
         self.parsers: list[BaseParser] = self._build_parsers()
@@ -56,6 +58,25 @@ class RedactionEngine:
         from redactify.parsers.html import HTMLParser
         parsers.append(HTMLParser())
         return parsers
+
+    @staticmethod
+    def _coerce_mode(mode: RedactionMode | str) -> RedactionMode:
+        """Coerce a string to RedactionMode, passing enums through."""
+        if isinstance(mode, RedactionMode):
+            return mode
+        return RedactionMode(mode.lower())
+
+    @staticmethod
+    def _coerce_detect_types(
+        detect_types: list[PIIType | str] | None,
+    ) -> list[PIIType] | None:
+        """Coerce a list of strings/PIITypes to list[PIIType]."""
+        if detect_types is None:
+            return None
+        return [
+            t if isinstance(t, PIIType) else PIIType(t.lower())
+            for t in detect_types
+        ]
 
     def _build_detector(
         self, detect_types: list[PIIType] | None, use_ner: bool, custom_patterns: list[dict] | None = None
