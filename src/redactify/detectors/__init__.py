@@ -5,6 +5,7 @@ from redactify.detectors.custom import CustomPatternDetector
 from redactify.detectors.regex import (
     CreditCardDetector,
     DateOfBirthDetector,
+    DriversLicenseDetector,
     EmailDetector,
     IPAddressDetector,
     IPv6Detector,
@@ -18,6 +19,7 @@ __all__ = [
     "CreditCardDetector",
     "CustomPatternDetector",
     "DateOfBirthDetector",
+    "DriversLicenseDetector",
     "EmailDetector",
     "IPAddressDetector",
     "IPv6Detector",
