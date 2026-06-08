@@ -1,0 +1,9 @@
+Device registry:
+- Server NIC: 00:1A:2B:3C:4D:5E
+- Router WAN: AA-BB-CC-DD-EE-FF
+- Switch port 1: 0011.2233.4455
+- Workstation: ff:ff:ff:ff:ff:ff
+- Printer: 00:1B:44:11:3A:B7
+This is a safe sentence with no MAC addresses.
+Invalid: ZZ:ZZ:ZZ:ZZ:ZZ:ZZ
+Also invalid: 00:1A:2B
