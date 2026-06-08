@@ -81,15 +81,6 @@ def redact_text(
         confidence_threshold=confidence_threshold,
         custom_patterns=custom_patterns,
     )
-    # Non-default mode needs its own Redactor
-    if mode is not RedactionMode.BLACKOUT and mode != "blackout":
-        engine = RedactionEngine(
-            mode=mode,
-            detect_types=detect_types,
-            use_ner=use_ner,
-            confidence_threshold=confidence_threshold,
-            custom_patterns=custom_patterns,
-        )
     return engine.redact_text(text)
 
 
