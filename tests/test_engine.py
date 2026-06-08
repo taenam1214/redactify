@@ -116,3 +116,30 @@ class TestStringArgCoercion:
     def test_invalid_detect_type_string_raises(self):
         with pytest.raises(ValueError):
             RedactionEngine(detect_types=["not_a_type"], use_ner=False)
+
+
+class TestScanText:
+    """Tests for the in-memory scan_text method."""
+
+    def test_scan_text_detects_email(self):
+        engine = RedactionEngine(use_ner=False)
+        entities = engine.scan_text("Contact john@example.com for info.")
+        assert len(entities) >= 1
+        assert any(e.pii_type == PIIType.EMAIL for e in entities)
+
+    def test_scan_text_detects_phone(self):
+        engine = RedactionEngine(use_ner=False)
+        entities = engine.scan_text("Call us at 555-123-4567.")
+        assert len(entities) >= 1
+        assert any(e.pii_type == PIIType.PHONE for e in entities)
+
+    def test_scan_text_no_pii(self):
+        engine = RedactionEngine(use_ner=False)
+        entities = engine.scan_text("This is a perfectly safe sentence.")
+        assert entities == []
+
+    def test_scan_text_respects_confidence_threshold(self):
+        engine = RedactionEngine(use_ner=False, confidence_threshold=0.99)
+        # Regex detectors have confidence=1.0, so they should still pass
+        entities = engine.scan_text("Email: john@example.com")
+        assert len(entities) >= 1

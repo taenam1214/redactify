@@ -128,6 +128,20 @@ class RedactionEngine:
                 return parser
         raise UnsupportedFileTypeError(file_path)
 
+    def scan_text(self, text: str) -> list[PIIEntity]:
+        """Scan a string for PII without redacting.
+
+        Args:
+            text: The text to scan.
+
+        Returns:
+            A list of detected PIIEntity instances.
+        """
+        entities = self.detector.detect(text)
+        if self.confidence_threshold > 0:
+            entities = filter_by_confidence(entities, self.confidence_threshold)
+        return entities
+
     def scan(self, file_path: Path) -> RedactionReport:
         """Scan a file for PII without redacting.
 
