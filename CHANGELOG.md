@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 ### Added
+- `TextResult` dataclass for in-memory text operations
+- `RedactionEngine.scan_text()` method for scanning strings without file I/O
+- `RedactionEngine.redact_text()` method for redacting strings without file I/O
+- String-to-enum coercion: `RedactionEngine(mode="label")` and `detect_types=["email"]` now work
+- Module-level convenience functions: `redact_text()`, `scan_text()`, `contains_pii()`, `scan()`, `redact()`
+- Engine caching for convenience functions to avoid repeated initialization
+
+## [0.2.0] - 2026-06-04
+
+### Added
 - `--strict` flag for scan and redact: exit code 1 when PII is detected (CI/pre-commit)
 - `--stream` flag for scan and redact: low-memory chunked processing for large files
 - `--audit` flag for redact: write JSON audit trail of redactions
