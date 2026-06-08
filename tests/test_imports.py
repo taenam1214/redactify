@@ -18,6 +18,18 @@ class TestTopLevelImports:
         from redactify import RedactionMode
         assert RedactionMode.BLACKOUT.value == "blackout"
 
+    def test_import_text_result(self):
+        from redactify import TextResult
+        assert TextResult is not None
+
+    def test_import_convenience_functions(self):
+        from redactify import contains_pii, redact, redact_text, scan, scan_text
+        assert callable(contains_pii)
+        assert callable(redact)
+        assert callable(redact_text)
+        assert callable(scan)
+        assert callable(scan_text)
+
 
 class TestSubpackageImports:
     def test_import_detectors(self):
