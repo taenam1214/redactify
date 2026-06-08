@@ -12,6 +12,7 @@ from redactify.detectors.composite import CompositeDetector
 from redactify.detectors.regex import (
     CreditCardDetector,
     DateOfBirthDetector,
+    DriversLicenseDetector,
     EmailDetector,
     IPAddressDetector,
     IPv6Detector,
@@ -97,6 +98,7 @@ class RedactionEngine:
             PIIType.DATE_OF_BIRTH: DateOfBirthDetector,
             PIIType.MAC_ADDRESS: MACAddressDetector,
             PIIType.IPV6: IPv6Detector,
+            PIIType.DRIVERS_LICENSE: DriversLicenseDetector,
         }
 
         if detect_types is None:
