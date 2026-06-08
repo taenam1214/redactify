@@ -11,6 +11,9 @@ All notable changes to this project will be documented in this file.
 - String-to-enum coercion: `RedactionEngine(mode="label")` and `detect_types=["email"]` now work
 - Module-level convenience functions: `redact_text()`, `scan_text()`, `contains_pii()`, `scan()`, `redact()`
 - Engine caching for convenience functions to avoid repeated initialization
+- `MACAddressDetector` — detects MAC addresses (colon, dash, and Cisco dot formats)
+- `IPv6Detector` — detects full and abbreviated IPv6 addresses
+- `DriversLicenseDetector` — detects US drivers license numbers with context-aware matching
 
 ## [0.2.0] - 2026-06-04
 
