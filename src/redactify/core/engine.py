@@ -14,6 +14,7 @@ from redactify.detectors.regex import (
     DateOfBirthDetector,
     EmailDetector,
     IPAddressDetector,
+    MACAddressDetector,
     PhoneDetector,
     SSNDetector,
 )
@@ -93,6 +94,7 @@ class RedactionEngine:
             PIIType.CREDIT_CARD: CreditCardDetector,
             PIIType.IP_ADDRESS: IPAddressDetector,
             PIIType.DATE_OF_BIRTH: DateOfBirthDetector,
+            PIIType.MAC_ADDRESS: MACAddressDetector,
         }
 
         if detect_types is None:
