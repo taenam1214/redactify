@@ -17,6 +17,7 @@ class PIIType(Enum):
     PERSON = "person"
     ORGANIZATION = "organization"
     LOCATION = "location"
+    MAC_ADDRESS = "mac_address"
     CUSTOM = "custom"
 
 
