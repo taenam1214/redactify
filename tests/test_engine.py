@@ -178,3 +178,47 @@ class TestRedactText:
         result = engine.redact_text("john@example.com and 555-123-4567")
         assert "email" in result.entities_by_type
         assert "phone" in result.entities_by_type
+
+
+class TestNewDetectorsIntegration:
+    """Test that new detectors work through the engine pipeline."""
+
+    def test_engine_detects_mac_address(self):
+        engine = RedactionEngine(detect_types=["mac_address"], use_ner=False)
+        entities = engine.scan_text("NIC: 00:1A:2B:3C:4D:5E")
+        assert len(entities) >= 1
+        assert any(e.pii_type == PIIType.MAC_ADDRESS for e in entities)
+
+    def test_engine_detects_ipv6(self):
+        engine = RedactionEngine(detect_types=["ipv6"], use_ner=False)
+        entities = engine.scan_text("Server: 2001:0db8:85a3:0000:0000:8a2e:0370:7334")
+        assert len(entities) >= 1
+        assert any(e.pii_type == PIIType.IPV6 for e in entities)
+
+    def test_engine_detects_drivers_license(self):
+        engine = RedactionEngine(detect_types=["drivers_license"], use_ner=False)
+        entities = engine.scan_text("Driver's license: D1234567")
+        assert len(entities) >= 1
+        assert any(e.pii_type == PIIType.DRIVERS_LICENSE for e in entities)
+
+    def test_redact_text_mac_address(self):
+        engine = RedactionEngine(mode="label", detect_types=["mac_address"], use_ner=False)
+        result = engine.redact_text("NIC: 00:1A:2B:3C:4D:5E")
+        assert "[MAC_ADDRESS]" in result.text
+
+    def test_redact_text_ipv6(self):
+        engine = RedactionEngine(mode="label", detect_types=["ipv6"], use_ner=False)
+        result = engine.redact_text("Server: 2001:0db8:85a3:0000:0000:8a2e:0370:7334")
+        assert "[IPV6]" in result.text
+
+    def test_redact_text_drivers_license(self):
+        engine = RedactionEngine(mode="label", detect_types=["drivers_license"], use_ner=False)
+        result = engine.redact_text("DL: D1234567")
+        assert "[DRIVERS_LICENSE]" in result.text
+
+    def test_all_new_detectors_in_default_engine(self):
+        engine = RedactionEngine(use_ner=False)
+        supported = engine.detector.supported_types
+        assert PIIType.MAC_ADDRESS in supported
+        assert PIIType.IPV6 in supported
+        assert PIIType.DRIVERS_LICENSE in supported
