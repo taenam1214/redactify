@@ -19,6 +19,7 @@ class PIIType(Enum):
     LOCATION = "location"
     MAC_ADDRESS = "mac_address"
     IPV6 = "ipv6"
+    DRIVERS_LICENSE = "drivers_license"
     CUSTOM = "custom"
 
 
