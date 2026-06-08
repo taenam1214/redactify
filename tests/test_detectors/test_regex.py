@@ -4,6 +4,7 @@ from redactify.core.detector import PIIType
 from redactify.detectors.regex import (
     CreditCardDetector,
     DateOfBirthDetector,
+    DriversLicenseDetector,
     EmailDetector,
     IPAddressDetector,
     IPv6Detector,
@@ -221,3 +222,35 @@ class TestDateOfBirthDetector:
         text = "Born on January 15, 1990"
         entities = self.detector.detect(text)
         assert len(entities) == 1
+
+
+class TestDriversLicenseDetectorBasic:
+    def setup_method(self):
+        self.detector = DriversLicenseDetector()
+
+    def test_detects_california_format(self):
+        text = "Driver's license: D1234567"
+        entities = self.detector.detect(text)
+        assert len(entities) >= 1
+        assert entities[0].pii_type == PIIType.DRIVERS_LICENSE
+
+    def test_detects_florida_format(self):
+        text = "DL# F123456789012"
+        entities = self.detector.detect(text)
+        assert len(entities) >= 1
+
+    def test_detects_ohio_format(self):
+        text = "License number: AB123456"
+        entities = self.detector.detect(text)
+        assert len(entities) >= 1
+
+    def test_detects_texas_format(self):
+        text = "DL: 12345678"
+        entities = self.detector.detect(text)
+        assert len(entities) >= 1
+
+    def test_confidence_is_08(self):
+        text = "Driver's license: D1234567"
+        entities = self.detector.detect(text)
+        assert len(entities) >= 1
+        assert entities[0].confidence == 0.8
