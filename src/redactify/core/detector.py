@@ -18,6 +18,7 @@ class PIIType(Enum):
     ORGANIZATION = "organization"
     LOCATION = "location"
     MAC_ADDRESS = "mac_address"
+    IPV6 = "ipv6"
     CUSTOM = "custom"
 
 
