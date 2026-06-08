@@ -143,3 +143,38 @@ class TestScanText:
         # Regex detectors have confidence=1.0, so they should still pass
         entities = engine.scan_text("Email: john@example.com")
         assert len(entities) >= 1
+
+
+class TestRedactText:
+    """Tests for the in-memory redact_text method."""
+
+    def test_redact_text_blackout(self):
+        engine = RedactionEngine(mode="blackout", use_ner=False)
+        result = engine.redact_text("Email: john@example.com")
+        assert "john@example.com" not in result.text
+        assert "█" in result.text
+        assert result.has_pii
+
+    def test_redact_text_label(self):
+        engine = RedactionEngine(mode="label", use_ner=False)
+        result = engine.redact_text("Email: john@example.com")
+        assert "[EMAIL]" in result.text
+        assert result.total_entities >= 1
+
+    def test_redact_text_hash(self):
+        engine = RedactionEngine(mode="hash", use_ner=False)
+        result = engine.redact_text("Email: john@example.com")
+        assert "[REDACTED-" in result.text
+
+    def test_redact_text_no_pii(self):
+        engine = RedactionEngine(use_ner=False)
+        result = engine.redact_text("Nothing sensitive here.")
+        assert result.text == "Nothing sensitive here."
+        assert result.has_pii is False
+        assert result.total_entities == 0
+
+    def test_redact_text_entities_by_type(self):
+        engine = RedactionEngine(use_ner=False)
+        result = engine.redact_text("john@example.com and 555-123-4567")
+        assert "email" in result.entities_by_type
+        assert "phone" in result.entities_by_type

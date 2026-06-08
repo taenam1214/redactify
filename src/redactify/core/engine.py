@@ -6,6 +6,7 @@ from redactify.core.audit import AuditTrail
 from redactify.core.detector import PIIEntity, PIIType
 from redactify.core.filters import filter_by_confidence
 from redactify.core.redactor import Redactor, RedactionMode
+from redactify.core.results import TextResult
 from redactify.exceptions import UnsupportedFileTypeError
 from redactify.detectors.composite import CompositeDetector
 from redactify.detectors.regex import (
@@ -141,6 +142,21 @@ class RedactionEngine:
         if self.confidence_threshold > 0:
             entities = filter_by_confidence(entities, self.confidence_threshold)
         return entities
+
+    def redact_text(self, text: str) -> TextResult:
+        """Redact PII from a string.
+
+        Args:
+            text: The text to redact.
+
+        Returns:
+            A TextResult with the redacted text and detected entities.
+        """
+        entities = self.detector.detect(text)
+        if self.confidence_threshold > 0:
+            entities = filter_by_confidence(entities, self.confidence_threshold)
+        redacted = self.redactor.redact(text, entities)
+        return TextResult(text=redacted, entities=entities)
 
     def scan(self, file_path: Path) -> RedactionReport:
         """Scan a file for PII without redacting.
