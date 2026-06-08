@@ -249,6 +249,79 @@ class IPv6Detector(BaseDetector):
         return [PIIType.IPV6]
 
 
+class DriversLicenseDetector(BaseDetector):
+    """Detects US drivers license numbers using state-specific patterns.
+
+    Uses context keywords (driver, license, DL, etc.) combined with
+    state-prefix patterns to reduce false positives.
+    """
+
+    # State-specific DL patterns (state code prefix + format)
+    # Covers the most common US state formats
+    STATE_PATTERNS: list[re.Pattern] = [
+        # California: 1 letter + 7 digits
+        re.compile(r"\b[A-Z]\d{7}\b"),
+        # New York: 3 digits + 3 spaces + 3 digits + 3 spaces + 3 digits (or no spaces)
+        re.compile(r"\b\d{3}[-\s]?\d{3}[-\s]?\d{3}\b"),
+        # Texas: 8 digits
+        re.compile(r"\b\d{8}\b"),
+        # Florida: 1 letter + 12 digits
+        re.compile(r"\b[A-Z]\d{12}\b"),
+        # Illinois: 1 letter + 11 digits
+        re.compile(r"\b[A-Z]\d{11}\b"),
+        # Pennsylvania: 2 digits + 6 digits (8 total)
+        re.compile(r"\b\d{2}[-\s]?\d{3}[-\s]?\d{3}\b"),
+        # Ohio: 2 letters + 6 digits
+        re.compile(r"\b[A-Z]{2}\d{6}\b"),
+        # Michigan: 1 letter + 12 digits
+        re.compile(r"\b[A-Z]\d{12}\b"),
+        # Washington: prefix WDL + 9-12 chars
+        re.compile(r"\bWDL[A-Z0-9*]{9,12}\b"),
+    ]
+
+    CONTEXT_KEYWORDS = {
+        "driver", "license", "licence", "dl", "d.l.", "driver's",
+        "driving", "dmv", "motor vehicle", "dl#", "dl no",
+    }
+
+    def detect(self, text: str) -> list[PIIEntity]:
+        entities = []
+        text_lower = text.lower()
+
+        # Only look for DL numbers if context keywords are present
+        has_context = any(kw in text_lower for kw in self.CONTEXT_KEYWORDS)
+        if not has_context:
+            return entities
+
+        for pattern in self.STATE_PATTERNS:
+            for match in pattern.finditer(text):
+                # Check local context around the match
+                context_start = max(0, match.start() - 60)
+                context_end = min(len(text), match.end() + 30)
+                context = text_lower[context_start:context_end]
+
+                if any(kw in context for kw in self.CONTEXT_KEYWORDS):
+                    entity = PIIEntity(
+                        text=match.group(),
+                        pii_type=PIIType.DRIVERS_LICENSE,
+                        start=match.start(),
+                        end=match.end(),
+                        confidence=0.8,
+                    )
+                    # Avoid duplicates from overlapping patterns
+                    if not any(
+                        e.start == entity.start and e.end == entity.end
+                        for e in entities
+                    ):
+                        entities.append(entity)
+
+        return entities
+
+    @property
+    def supported_types(self) -> list[PIIType]:
+        return [PIIType.DRIVERS_LICENSE]
+
+
 class DateOfBirthDetector(BaseDetector):
     """Detects dates that may be dates of birth based on context."""
 
