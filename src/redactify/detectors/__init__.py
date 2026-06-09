@@ -9,6 +9,7 @@ from redactify.detectors.regex import (
     EmailDetector,
     IBANDetector,
     PassportDetector,
+    URLDetector,
     IPAddressDetector,
     IPv6Detector,
     MACAddressDetector,
@@ -30,4 +31,5 @@ __all__ = [
     "MACAddressDetector",
     "PhoneDetector",
     "SSNDetector",
+    "URLDetector",
 ]
