@@ -206,6 +206,22 @@ def supported():
     click.echo("")
 
 
+def _suggest_pii_type(invalid: str) -> str | None:
+    """Suggest a valid PIIType for a misspelled input using simple edit distance."""
+    valid_names = [t.value for t in PIIType if t != PIIType.CUSTOM]
+    # Simple: check if the invalid name is a prefix or substring of a valid name
+    for name in valid_names:
+        if invalid in name or name.startswith(invalid[:3]):
+            return name
+    # Fallback: find the closest match by character overlap
+    best, best_score = None, 0
+    for name in valid_names:
+        score = sum(1 for c in invalid if c in name)
+        if score > best_score:
+            best, best_score = name, score
+    return best if best_score > len(invalid) // 2 else None
+
+
 def _parse_detect_types(detect: str | None) -> list[PIIType] | None:
     """Parse comma-separated PII type string into a list."""
     if detect is None:
@@ -216,7 +232,14 @@ def _parse_detect_types(detect: str | None) -> list[PIIType] | None:
         try:
             types.append(PIIType(name))
         except ValueError:
-            click.echo(f"Warning: Unknown PII type '{name}', skipping.", err=True)
+            suggestion = _suggest_pii_type(name)
+            if suggestion:
+                click.echo(
+                    f"Warning: Unknown PII type '{name}'. Did you mean '{suggestion}'?",
+                    err=True,
+                )
+            else:
+                click.echo(f"Warning: Unknown PII type '{name}', skipping.", err=True)
     return types if types else None
 
 
