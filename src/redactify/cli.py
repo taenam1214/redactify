@@ -47,7 +47,8 @@ def main():
 @click.option("--strict", is_flag=True, help="Exit with code 1 if any PII is detected.")
 @click.option("--stream", is_flag=True, help="Use streaming mode for large text files (low memory).")
 @click.option("--audit", "audit_path", type=click.Path(path_type=Path), default=None, help="Write a JSON audit trail to this path.")
-def redact(file: Path, output: Path | None, mode: str, detect: str | None, no_ner: bool, confidence: float, recursive: bool, dry_run: bool, report_format: str, use_json: bool, strict: bool, stream: bool, audit_path: Path | None):
+@click.option("--workers", type=int, default=1, help="Number of parallel workers for directory processing.")
+def redact(file: Path, output: Path | None, mode: str, detect: str | None, no_ner: bool, confidence: float, recursive: bool, dry_run: bool, report_format: str, use_json: bool, strict: bool, stream: bool, audit_path: Path | None, workers: int):
     """Redact PII from a document or directory."""
     detect_types = _parse_detect_types(detect)
     redaction_mode = RedactionMode(mode)
@@ -75,7 +76,7 @@ def redact(file: Path, output: Path | None, mode: str, detect: str | None, no_ne
         return
 
     if file.is_dir():
-        reports = engine.redact_directory(file, output_dir=output, recursive=recursive)
+        reports = engine.redact_directory(file, output_dir=output, recursive=recursive, workers=workers)
         for report in reports:
             click.echo(reporter.report(report))
             click.echo("")
@@ -112,7 +113,8 @@ def redact(file: Path, output: Path | None, mode: str, detect: str | None, no_ne
 @click.option("--json", "use_json", is_flag=True, help="Output results as JSON (shorthand for --format json).")
 @click.option("--strict", is_flag=True, help="Exit with code 1 if any PII is detected.")
 @click.option("--stream", is_flag=True, help="Use streaming mode for large text files (low memory).")
-def scan(file: Path, detect: str | None, no_ner: bool, confidence: float, recursive: bool, report_format: str, use_json: bool, strict: bool, stream: bool):
+@click.option("--workers", type=int, default=1, help="Number of parallel workers for directory processing.")
+def scan(file: Path, detect: str | None, no_ner: bool, confidence: float, recursive: bool, report_format: str, use_json: bool, strict: bool, stream: bool, workers: int):
     """Scan a document or directory for PII without redacting."""
     detect_types = _parse_detect_types(detect)
 
@@ -125,7 +127,7 @@ def scan(file: Path, detect: str | None, no_ner: bool, confidence: float, recurs
     reporter = JSONReporter() if (use_json or report_format == "json") else ConsoleReporter()
 
     if file.is_dir():
-        reports = engine.scan_directory(file, recursive=recursive)
+        reports = engine.scan_directory(file, recursive=recursive, workers=workers)
         for report in reports:
             click.echo(reporter.report(report))
             click.echo("")
