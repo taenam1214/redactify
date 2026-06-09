@@ -1,0 +1,70 @@
+name: "Redactify PII Scanner"
+description: "Scan changed files in pull requests for PII using Redactify"
+author: "taenam1214"
+
+branding:
+  icon: "shield"
+  color: "blue"
+
+inputs:
+  mode:
+    description: "Redaction mode for the report (blackout, label, hash)"
+    required: false
+    default: "label"
+  confidence:
+    description: "Minimum confidence threshold (0.0-1.0)"
+    required: false
+    default: "0.0"
+  fail-on-pii:
+    description: "Fail the check if PII is detected"
+    required: false
+    default: "true"
+  detect-types:
+    description: "Comma-separated PII types to detect (empty = all)"
+    required: false
+    default: ""
+
+runs:
+  using: "composite"
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.12"
+
+    - name: Install Redactify
+      shell: bash
+      run: |
+        pip install --quiet redactify
+        python -m spacy download en_core_web_sm --quiet
+
+    - name: Get changed files
+      id: changed
+      shell: bash
+      run: |
+        if [ "${{ github.event_name }}" = "pull_request" ]; then
+          git diff --name-only --diff-filter=ACMR ${{ github.event.pull_request.base.sha }} HEAD > /tmp/changed_files.txt
+        else
+          git diff --name-only --diff-filter=ACMR HEAD~1 HEAD > /tmp/changed_files.txt
+        fi
+
+    - name: Scan for PII
+      shell: bash
+      run: |
+        EXIT_CODE=0
+        DETECT_FLAG=""
+        if [ -n "${{ inputs.detect-types }}" ]; then
+          DETECT_FLAG="--detect ${{ inputs.detect-types }}"
+        fi
+        while IFS= read -r file; do
+          if [ -f "$file" ]; then
+            echo "::group::Scanning $file"
+            redactify scan "$file" --confidence ${{ inputs.confidence }} $DETECT_FLAG --json || true
+            echo "::endgroup::"
+            RESULT=$(redactify scan "$file" --confidence ${{ inputs.confidence }} $DETECT_FLAG --strict 2>&1) || EXIT_CODE=1
+          fi
+        done < /tmp/changed_files.txt
+        if [ "${{ inputs.fail-on-pii }}" = "true" ] && [ $EXIT_CODE -ne 0 ]; then
+          echo "::error::PII detected in changed files"
+          exit 1
+        fi
