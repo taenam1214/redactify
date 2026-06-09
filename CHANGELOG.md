@@ -11,9 +11,16 @@ All notable changes to this project will be documented in this file.
 - String-to-enum coercion: `RedactionEngine(mode="label")` and `detect_types=["email"]` now work
 - Module-level convenience functions: `redact_text()`, `scan_text()`, `contains_pii()`, `scan()`, `redact()`
 - Engine caching for convenience functions to avoid repeated initialization
+- `IBANDetector` — detects international bank account numbers with mod-97 checksum validation
+- `PassportDetector` — detects passport numbers (US, UK, EU) with context-aware matching
+- `URLDetector` — detects URLs containing PII in paths or query parameters
 - `MACAddressDetector` — detects MAC addresses (colon, dash, and Cisco dot formats)
 - `IPv6Detector` — detects full and abbreviated IPv6 addresses
 - `DriversLicenseDetector` — detects US drivers license numbers with context-aware matching
+- Allowlist system for excluding known-safe strings from PII detection
+- Minimum 80% code coverage enforcement in CI
+- Security scanning workflow (pip-audit + bandit)
+- Dependabot configuration for automated dependency updates
 
 ## [0.2.0] - 2026-06-04
 
