@@ -7,6 +7,7 @@ from redactify.detectors.regex import (
     DriversLicenseDetector,
     EmailDetector,
     IBANDetector,
+    PassportDetector,
     IPAddressDetector,
     IPv6Detector,
     MACAddressDetector,
@@ -121,6 +122,48 @@ class TestIPAddressDetector:
         text = "From 10.0.0.1 to 172.16.0.1"
         entities = self.detector.detect(text)
         assert len(entities) == 2
+
+
+class TestPassportDetector:
+    def setup_method(self):
+        self.detector = PassportDetector()
+
+    def test_detects_us_passport(self):
+        text = "Passport number: 123456789"
+        entities = self.detector.detect(text)
+        assert len(entities) >= 1
+        assert entities[0].pii_type == PIIType.PASSPORT
+
+    def test_detects_eu_passport(self):
+        text = "Passport no AB1234567"
+        entities = self.detector.detect(text)
+        assert len(entities) >= 1
+
+    def test_detects_uk_format(self):
+        text = "Travel document: 987654321"
+        entities = self.detector.detect(text)
+        assert len(entities) >= 1
+
+    def test_no_match_without_context(self):
+        # 9 digits alone without passport context should not match
+        text = "The order number is 123456789."
+        entities = self.detector.detect(text)
+        assert len(entities) == 0
+
+    def test_no_match_on_plain_text(self):
+        entities = self.detector.detect("This is just a normal sentence.")
+        assert len(entities) == 0
+
+    def test_confidence_is_08(self):
+        text = "Passport: 123456789"
+        entities = self.detector.detect(text)
+        assert len(entities) >= 1
+        assert entities[0].confidence == 0.8
+
+    def test_case_insensitive_context(self):
+        text = "PASSPORT NUMBER: 123456789"
+        entities = self.detector.detect(text)
+        assert len(entities) >= 1
 
 
 class TestIBANDetector:
