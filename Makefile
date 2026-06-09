@@ -1,4 +1,4 @@
-.PHONY: install dev test coverage lint format clean build
+.PHONY: install dev test coverage lint format clean build bench
 
 install:
 	pip install -e .
@@ -24,6 +24,11 @@ format:
 clean:
 	rm -rf dist/ build/ *.egg-info .pytest_cache .coverage htmlcov/
 	find . -type d -name __pycache__ -exec rm -rf {} +
+
+bench:
+	python -m benchmarks.bench_detectors
+	python -m benchmarks.bench_engine
+	python -m benchmarks.bench_memory
 
 build:
 	python -m build
