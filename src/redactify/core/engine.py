@@ -354,7 +354,8 @@ class RedactionEngine:
                 yield file_path
 
     def redact_directory(
-        self, input_dir: Path, output_dir: Path | None = None, recursive: bool = False
+        self, input_dir: Path, output_dir: Path | None = None, recursive: bool = False,
+        workers: int = 1,
     ) -> list[RedactionReport]:
         """Redact all supported files in a directory.
 
@@ -362,6 +363,7 @@ class RedactionEngine:
             input_dir: Path to the input directory.
             output_dir: Path for redacted outputs. Defaults to <input_dir>/redacted/.
             recursive: If True, process subdirectories recursively.
+            workers: Number of parallel workers. 1 = sequential (default).
 
         Returns:
             A list of RedactionReports for each processed file.
@@ -375,20 +377,42 @@ class RedactionEngine:
         output_dir = Path(output_dir)
         output_dir.mkdir(parents=True, exist_ok=True)
 
+        file_list = list(self._iter_files(input_dir, recursive))
+
+        if workers > 1 and len(file_list) > 1:
+            return self._redact_parallel(file_list, output_dir, workers)
+
         reports: list[RedactionReport] = []
-        for file_path in self._iter_files(input_dir, recursive):
+        for file_path in file_list:
             out_path = output_dir / file_path.name
             report = self.redact(file_path, output_path=out_path)
             reports.append(report)
 
         return reports
 
-    def scan_directory(self, input_dir: Path, recursive: bool = False) -> list[RedactionReport]:
+    def _redact_parallel(
+        self, file_list: list[Path], output_dir: Path, workers: int
+    ) -> list[RedactionReport]:
+        """Redact files in parallel using a thread pool."""
+        from concurrent.futures import ThreadPoolExecutor
+
+        def _process(file_path: Path) -> RedactionReport:
+            out_path = output_dir / file_path.name
+            return self.redact(file_path, output_path=out_path)
+
+        with ThreadPoolExecutor(max_workers=workers) as executor:
+            reports = list(executor.map(_process, file_list))
+        return reports
+
+    def scan_directory(
+        self, input_dir: Path, recursive: bool = False, workers: int = 1
+    ) -> list[RedactionReport]:
         """Scan all supported files in a directory for PII.
 
         Args:
             input_dir: Path to the directory to scan.
             recursive: If True, scan subdirectories recursively.
+            workers: Number of parallel workers. 1 = sequential (default).
 
         Returns:
             A list of RedactionReports for each scanned file.
@@ -397,8 +421,15 @@ class RedactionEngine:
         if not input_dir.is_dir():
             raise NotADirectoryError(f"Not a directory: {input_dir}")
 
+        file_list = list(self._iter_files(input_dir, recursive))
+
+        if workers > 1 and len(file_list) > 1:
+            from concurrent.futures import ThreadPoolExecutor
+            with ThreadPoolExecutor(max_workers=workers) as executor:
+                return list(executor.map(self.scan, file_list))
+
         reports: list[RedactionReport] = []
-        for file_path in self._iter_files(input_dir, recursive):
+        for file_path in file_list:
             report = self.scan(file_path)
             reports.append(report)
 
