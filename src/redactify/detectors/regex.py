@@ -160,6 +160,63 @@ class IPAddressDetector(BaseDetector):
         return [PIIType.IP_ADDRESS]
 
 
+class PassportDetector(BaseDetector):
+    """Detects passport numbers using context keywords and country-specific formats."""
+
+    # Patterns for common passport formats
+    PASSPORT_PATTERNS: list[re.Pattern] = [
+        # US: 9 digits
+        re.compile(r"\b\d{9}\b"),
+        # UK: 9 digits (same format, but context differentiates)
+        # EU / generic: 1-2 letters + 6-7 digits
+        re.compile(r"\b[A-Z]{1,2}\d{6,7}\b"),
+        # Some countries: 2 letters + 7 digits
+        re.compile(r"\b[A-Z]{2}\d{7}\b"),
+    ]
+
+    CONTEXT_KEYWORDS = {
+        "passport", "passport#", "passport no", "passport number",
+        "travel document", "travel doc",
+    }
+
+    def detect(self, text: str) -> list[PIIEntity]:
+        entities = []
+        text_lower = text.lower()
+
+        # Only look for passport numbers if context keywords are present
+        has_context = any(kw in text_lower for kw in self.CONTEXT_KEYWORDS)
+        if not has_context:
+            return entities
+
+        for pattern in self.PASSPORT_PATTERNS:
+            for match in pattern.finditer(text):
+                # Check local context around the match
+                context_start = max(0, match.start() - 60)
+                context_end = min(len(text), match.end() + 30)
+                context = text_lower[context_start:context_end]
+
+                if any(kw in context for kw in self.CONTEXT_KEYWORDS):
+                    entity = PIIEntity(
+                        text=match.group(),
+                        pii_type=PIIType.PASSPORT,
+                        start=match.start(),
+                        end=match.end(),
+                        confidence=0.8,
+                    )
+                    # Avoid duplicates from overlapping patterns
+                    if not any(
+                        e.start == entity.start and e.end == entity.end
+                        for e in entities
+                    ):
+                        entities.append(entity)
+
+        return entities
+
+    @property
+    def supported_types(self) -> list[PIIType]:
+        return [PIIType.PASSPORT]
+
+
 class IBANDetector(BaseDetector):
     """Detects International Bank Account Numbers with mod-97 validation."""
 
