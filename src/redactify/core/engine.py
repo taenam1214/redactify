@@ -2,6 +2,7 @@
 
 from pathlib import Path
 
+from redactify.core.allowlist import Allowlist
 from redactify.core.audit import AuditTrail
 from redactify.core.detector import PIIEntity, PIIType
 from redactify.core.filters import filter_by_confidence
@@ -40,11 +41,12 @@ class RedactionEngine:
         use_ner: bool = True,
         custom_patterns: list[dict] | None = None,
         confidence_threshold: float = 0.0,
+        allowlist: Allowlist | None = None,
     ):
         mode = self._coerce_mode(mode)
         detect_types = self._coerce_detect_types(detect_types)
         self.redactor = Redactor(mode=mode, custom_string=custom_string)
-        self.detector = self._build_detector(detect_types, use_ner, custom_patterns)
+        self.detector = self._build_detector(detect_types, use_ner, custom_patterns, allowlist)
         self.parsers: list[BaseParser] = self._build_parsers()
         self.confidence_threshold = confidence_threshold
 
@@ -86,10 +88,14 @@ class RedactionEngine:
         ]
 
     def _build_detector(
-        self, detect_types: list[PIIType] | None, use_ner: bool, custom_patterns: list[dict] | None = None
+        self,
+        detect_types: list[PIIType] | None,
+        use_ner: bool,
+        custom_patterns: list[dict] | None = None,
+        allowlist: Allowlist | None = None,
     ) -> CompositeDetector:
         """Build a composite detector based on requested PII types."""
-        composite = CompositeDetector()
+        composite = CompositeDetector(allowlist=allowlist)
 
         # Map of PIIType to regex detector class
         regex_map = {
