@@ -6,6 +6,7 @@ from redactify.detectors.regex import (
     DateOfBirthDetector,
     DriversLicenseDetector,
     EmailDetector,
+    IBANDetector,
     IPAddressDetector,
     IPv6Detector,
     MACAddressDetector,
@@ -118,6 +119,54 @@ class TestIPAddressDetector:
 
     def test_detects_multiple_ips(self):
         text = "From 10.0.0.1 to 172.16.0.1"
+        entities = self.detector.detect(text)
+        assert len(entities) == 2
+
+
+class TestIBANDetector:
+    def setup_method(self):
+        self.detector = IBANDetector()
+
+    def test_detects_german_iban(self):
+        text = "Pay to DE89370400440532013000"
+        entities = self.detector.detect(text)
+        assert len(entities) == 1
+        assert entities[0].text == "DE89370400440532013000"
+        assert entities[0].pii_type == PIIType.IBAN
+
+    def test_detects_british_iban(self):
+        text = "Account: GB29NWBK60161331926819"
+        entities = self.detector.detect(text)
+        assert len(entities) == 1
+
+    def test_detects_french_iban(self):
+        text = "IBAN: FR7630006000011234567890189"
+        entities = self.detector.detect(text)
+        assert len(entities) == 1
+
+    def test_detects_iban_with_spaces(self):
+        text = "Transfer to DE89 3704 0044 0532 0130 00"
+        entities = self.detector.detect(text)
+        assert len(entities) == 1
+
+    def test_rejects_invalid_checksum(self):
+        # DE00 would fail mod-97
+        text = "Account: DE00370400440532013000"
+        entities = self.detector.detect(text)
+        assert len(entities) == 0
+
+    def test_rejects_wrong_length(self):
+        # DE IBANs must be 22 chars, this is too short
+        text = "Account: DE8937040044053"
+        entities = self.detector.detect(text)
+        assert len(entities) == 0
+
+    def test_no_false_positive_on_plain_text(self):
+        entities = self.detector.detect("This is just a normal sentence.")
+        assert len(entities) == 0
+
+    def test_detects_multiple_ibans(self):
+        text = "From DE89370400440532013000 to GB29NWBK60161331926819"
         entities = self.detector.detect(text)
         assert len(entities) == 2
 
