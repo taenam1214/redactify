@@ -31,7 +31,7 @@ jobs:
         run: ruff check src/ tests/
 
       - name: Run tests with coverage
-        run: pytest tests/ -v --cov=redactify --cov-report=xml
+        run: pytest tests/ -v --cov=redactify --cov-report=xml --cov-fail-under=80
 
       - name: Upload coverage to Codecov
         if: matrix.python-version == '3.12'
