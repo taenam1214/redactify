@@ -1,6 +1,7 @@
 """Redactify CLI — command-line interface."""
 
 import sys
+import time
 from pathlib import Path
 
 import click
@@ -11,6 +12,14 @@ from redactify.core.redactor import RedactionMode
 from redactify.reporters.console import ConsoleReporter
 from redactify.reporters.json_reporter import JSONReporter
 from redactify.utils.config import RedactifyConfig
+
+
+def _progress_bar(iterable, *, quiet: bool, **kwargs):
+    """Wrap an iterable with tqdm if not in quiet mode and stdout is a TTY."""
+    if quiet or not sys.stdout.isatty():
+        return iterable
+    from tqdm import tqdm
+    return tqdm(iterable, **kwargs)
 
 
 PII_TYPE_CHOICES = [t.value for t in PIIType if t != PIIType.CUSTOM]
@@ -48,10 +57,15 @@ def main():
 @click.option("--stream", is_flag=True, help="Use streaming mode for large text files (low memory).")
 @click.option("--audit", "audit_path", type=click.Path(path_type=Path), default=None, help="Write a JSON audit trail to this path.")
 @click.option("--workers", type=int, default=1, help="Number of parallel workers for directory processing.")
-def redact(file: Path, output: Path | None, mode: str, detect: str | None, no_ner: bool, confidence: float, recursive: bool, dry_run: bool, report_format: str, use_json: bool, strict: bool, stream: bool, audit_path: Path | None, workers: int):
+@click.option("-q", "--quiet", is_flag=True, help="Suppress progress bars and non-essential output.")
+@click.option("-v", "--verbose", count=True, help="Increase verbosity. Use -vv for extra detail.")
+def redact(file: Path, output: Path | None, mode: str, detect: str | None, no_ner: bool, confidence: float, recursive: bool, dry_run: bool, report_format: str, use_json: bool, strict: bool, stream: bool, audit_path: Path | None, workers: int, quiet: bool, verbose: int):
     """Redact PII from a document or directory."""
     detect_types = _parse_detect_types(detect)
     redaction_mode = RedactionMode(mode)
+
+    if verbose and not quiet:
+        click.echo(f"  Mode: {redaction_mode.value}, NER: {not no_ner}, Confidence: {confidence}")
 
     engine = RedactionEngine(
         mode=redaction_mode,
@@ -114,9 +128,14 @@ def redact(file: Path, output: Path | None, mode: str, detect: str | None, no_ne
 @click.option("--strict", is_flag=True, help="Exit with code 1 if any PII is detected.")
 @click.option("--stream", is_flag=True, help="Use streaming mode for large text files (low memory).")
 @click.option("--workers", type=int, default=1, help="Number of parallel workers for directory processing.")
-def scan(file: Path, detect: str | None, no_ner: bool, confidence: float, recursive: bool, report_format: str, use_json: bool, strict: bool, stream: bool, workers: int):
+@click.option("-q", "--quiet", is_flag=True, help="Suppress progress bars and non-essential output.")
+@click.option("-v", "--verbose", count=True, help="Increase verbosity. Use -vv for extra detail.")
+def scan(file: Path, detect: str | None, no_ner: bool, confidence: float, recursive: bool, report_format: str, use_json: bool, strict: bool, stream: bool, workers: int, quiet: bool, verbose: int):
     """Scan a document or directory for PII without redacting."""
     detect_types = _parse_detect_types(detect)
+
+    if verbose and not quiet:
+        click.echo(f"  NER: {not no_ner}, Confidence: {confidence}")
 
     engine = RedactionEngine(
         detect_types=detect_types,
