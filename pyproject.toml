@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "redactify"
-version = "0.1.0"
+version = "0.2.0"
 description = "Privacy-preserving document redaction tool. Runs 100% locally."
 readme = "README.md"
 license = "MIT"
@@ -37,6 +37,7 @@ classifiers = [
 dependencies = [
     "click>=8.0",
     "spacy>=3.5",
+    "tqdm>=4.60",
 ]
 
 [project.optional-dependencies]
