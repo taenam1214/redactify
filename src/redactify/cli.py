@@ -167,12 +167,18 @@ def scan(file: Path, detect: str | None, no_ner: bool, confidence: float, recurs
 @click.option("--init", "do_init", is_flag=True, help="Create a default config file.")
 @click.option("--show", is_flag=True, help="Show current configuration.")
 @click.option("--path", type=click.Path(path_type=Path), default=None, help="Config file path.")
-def config(do_init: bool, show: bool, path: Path | None):
+@click.option("--format", "config_format", type=click.Choice(["json", "yaml"]), default="json", help="Config file format.")
+def config(do_init: bool, show: bool, path: Path | None, config_format: str):
     """Manage Redactify configuration."""
     if do_init:
         cfg = RedactifyConfig()
-        cfg.to_file(path)
-        out_path = path or Path.cwd() / ".redactify.json"
+        cfg.to_file(path, fmt=config_format)
+        if path:
+            out_path = path
+        elif config_format == "yaml":
+            out_path = Path.cwd() / ".redactify.yml"
+        else:
+            out_path = Path.cwd() / ".redactify.json"
         click.echo(f"  Config created at: {out_path}")
     elif show:
         cfg = RedactifyConfig.from_file(path)
