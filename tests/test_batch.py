@@ -52,3 +52,37 @@ class TestBatchProcessing:
         engine = RedactionEngine(use_ner=False)
         with pytest.raises(UnsupportedFileTypeError):
             engine.scan(Path("/tmp/file.unsupported"))
+
+
+class TestParallelBatch:
+    """Tests for the workers parameter."""
+
+    def test_scan_directory_parallel(self, tmp_path):
+        for i in range(4):
+            (tmp_path / f"f{i}.txt").write_text(f"user{i}@example.com")
+        engine = RedactionEngine(use_ner=False)
+        reports = engine.scan_directory(tmp_path, workers=2)
+        assert len(reports) == 4
+        for r in reports:
+            assert r.total_entities >= 1
+
+    def test_redact_directory_parallel(self, tmp_path):
+        src = tmp_path / "src"
+        src.mkdir()
+        for i in range(3):
+            (src / f"f{i}.txt").write_text(f"SSN: 123-45-678{i}")
+        out = tmp_path / "out"
+        engine = RedactionEngine(use_ner=False)
+        reports = engine.redact_directory(src, output_dir=out, workers=2)
+        assert len(reports) == 3
+        assert all(r.redacted for r in reports)
+
+    def test_parallel_matches_sequential(self, tmp_path):
+        for i in range(4):
+            (tmp_path / f"f{i}.txt").write_text(f"user{i}@test.com and 555-{i}23-4567")
+        engine = RedactionEngine(use_ner=False)
+        seq = engine.scan_directory(tmp_path, workers=1)
+        par = engine.scan_directory(tmp_path, workers=3)
+        seq_counts = sorted(r.total_entities for r in seq)
+        par_counts = sorted(r.total_entities for r in par)
+        assert seq_counts == par_counts
