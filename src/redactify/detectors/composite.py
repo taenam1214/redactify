@@ -1,13 +1,21 @@
 """Composite detector that combines multiple detectors."""
 
+from __future__ import annotations
+
+from redactify.core.allowlist import Allowlist
 from redactify.core.detector import BaseDetector, PIIEntity, PIIType
 
 
 class CompositeDetector(BaseDetector):
     """Combines multiple detectors and deduplicates overlapping entities."""
 
-    def __init__(self, detectors: list[BaseDetector] | None = None):
+    def __init__(
+        self,
+        detectors: list[BaseDetector] | None = None,
+        allowlist: Allowlist | None = None,
+    ):
         self._detectors: list[BaseDetector] = detectors or []
+        self.allowlist: Allowlist | None = allowlist
 
     def add_detector(self, detector: BaseDetector) -> None:
         """Add a detector to the composite."""
@@ -18,7 +26,12 @@ class CompositeDetector(BaseDetector):
         for detector in self._detectors:
             all_entities.extend(detector.detect(text))
 
-        return self._deduplicate(all_entities)
+        deduplicated = self._deduplicate(all_entities)
+
+        # Apply allowlist as post-filter
+        if self.allowlist is not None:
+            return self.allowlist.filter_entities(deduplicated)
+        return deduplicated
 
     @staticmethod
     def _deduplicate(entities: list[PIIEntity]) -> list[PIIEntity]:
