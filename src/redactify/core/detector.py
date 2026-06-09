@@ -17,6 +17,7 @@ class PIIType(Enum):
     PERSON = "person"
     ORGANIZATION = "organization"
     LOCATION = "location"
+    PASSPORT = "passport"
     IBAN = "iban"
     MAC_ADDRESS = "mac_address"
     IPV6 = "ipv6"
