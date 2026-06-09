@@ -8,6 +8,7 @@ from redactify.detectors.regex import (
     EmailDetector,
     IBANDetector,
     PassportDetector,
+    URLDetector,
     IPAddressDetector,
     IPv6Detector,
     MACAddressDetector,
@@ -122,6 +123,52 @@ class TestIPAddressDetector:
         text = "From 10.0.0.1 to 172.16.0.1"
         entities = self.detector.detect(text)
         assert len(entities) == 2
+
+
+class TestURLDetector:
+    def setup_method(self):
+        self.detector = URLDetector()
+
+    def test_detects_url_with_email(self):
+        text = "Visit https://example.com/user/john@example.com/profile"
+        entities = self.detector.detect(text)
+        assert len(entities) == 1
+        assert entities[0].pii_type == PIIType.URL
+
+    def test_detects_url_with_user_path(self):
+        text = "API: https://api.example.com/users/john_doe"
+        entities = self.detector.detect(text)
+        assert len(entities) == 1
+
+    def test_detects_url_with_pii_query_param(self):
+        text = "Link: https://site.com/search?email=john@test.com&page=1"
+        entities = self.detector.detect(text)
+        assert len(entities) == 1
+
+    def test_detects_url_with_token_param(self):
+        text = "Reset: https://app.com/reset?token=abc123&user=admin"
+        entities = self.detector.detect(text)
+        assert len(entities) == 1
+
+    def test_ignores_safe_url(self):
+        text = "Visit https://www.google.com/search?q=python"
+        entities = self.detector.detect(text)
+        assert len(entities) == 0
+
+    def test_ignores_plain_text(self):
+        entities = self.detector.detect("No URLs here at all.")
+        assert len(entities) == 0
+
+    def test_detects_url_with_account_path(self):
+        text = "https://bank.com/account/123456789/statements"
+        entities = self.detector.detect(text)
+        assert len(entities) == 1
+
+    def test_confidence_is_07(self):
+        text = "https://example.com/users/admin"
+        entities = self.detector.detect(text)
+        assert len(entities) == 1
+        assert entities[0].confidence == 0.7
 
 
 class TestPassportDetector:
