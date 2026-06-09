@@ -160,6 +160,53 @@ class IPAddressDetector(BaseDetector):
         return [PIIType.IP_ADDRESS]
 
 
+class URLDetector(BaseDetector):
+    """Detects URLs that may contain PII in their path or query parameters.
+
+    Flags URLs containing indicators of personal data such as email addresses,
+    names, IDs, or tokens in paths/query strings.
+    """
+
+    # Match HTTP/HTTPS URLs
+    URL_PATTERN = re.compile(
+        r"https?://[^\s<>\"']+",
+        re.IGNORECASE,
+    )
+
+    # PII indicators that suggest a URL contains personal information
+    PII_PATH_INDICATORS = re.compile(
+        r"(?:"
+        r"[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}"  # email in URL
+        r"|/users?/[^/\s]+"  # /user/username or /users/id
+        r"|/profiles?/[^/\s]+"  # /profile/name
+        r"|/accounts?/[^/\s]+"  # /account/id
+        r"|[?&](?:email|name|user|ssn|phone|token|key|secret|password|api_key)="  # PII query params
+        r")",
+        re.IGNORECASE,
+    )
+
+    def detect(self, text: str) -> list[PIIEntity]:
+        entities = []
+        for match in self.URL_PATTERN.finditer(text):
+            url = match.group()
+            # Only flag URLs that contain PII indicators
+            if self.PII_PATH_INDICATORS.search(url):
+                entities.append(
+                    PIIEntity(
+                        text=url,
+                        pii_type=PIIType.URL,
+                        start=match.start(),
+                        end=match.end(),
+                        confidence=0.7,
+                    )
+                )
+        return entities
+
+    @property
+    def supported_types(self) -> list[PIIType]:
+        return [PIIType.URL]
+
+
 class PassportDetector(BaseDetector):
     """Detects passport numbers using context keywords and country-specific formats."""
 
