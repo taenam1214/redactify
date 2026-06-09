@@ -18,6 +18,22 @@ All notable changes to this project will be documented in this file.
 - `IPv6Detector` — detects full and abbreviated IPv6 addresses
 - `DriversLicenseDetector` — detects US drivers license numbers with context-aware matching
 - Allowlist system for excluding known-safe strings from PII detection
+- Module-level spaCy model caching across NERDetector instances
+- Parallel batch processing with `--workers N` flag for directory scan/redact
+- Progress bar helper with TTY auto-detection and `--quiet` suppression
+- `--verbose` / `-v` flag for detailed processing info
+- YAML config support (`.redactify.yml`) with auto-detection and `--format yaml`
+- `ConfigValidationError` exception for invalid config values
+- Did-you-mean suggestions for misspelled PII types in CLI
+- Release automation workflow (GitHub Release on version tag)
+- Dockerfile with python:3.12-slim and pre-installed spaCy model
+- `.dockerignore` for lean Docker builds
+- GitHub Action (`action.yml`) for PII scanning in pull requests
+- Benchmark suite: detector throughput, engine end-to-end, memory profiling
+- `make bench` target for running benchmarks
+- PDF and DOCX parser integration tests with skip markers
+- Property-based tests using Hypothesis
+- Fuzzing tests for unicode, extreme lengths, nested PII, control characters
 - Minimum 80% code coverage enforcement in CI
 - Security scanning workflow (pip-audit + bandit)
 - Dependabot configuration for automated dependency updates
