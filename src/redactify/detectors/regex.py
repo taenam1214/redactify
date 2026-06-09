@@ -160,6 +160,76 @@ class IPAddressDetector(BaseDetector):
         return [PIIType.IP_ADDRESS]
 
 
+class IBANDetector(BaseDetector):
+    """Detects International Bank Account Numbers with mod-97 validation."""
+
+    # IBAN: 2 uppercase letters (country) + 2 check digits + up to 30 alphanumeric (BBAN)
+    PATTERN = re.compile(
+        r"\b([A-Z]{2}\d{2}[\s]?[A-Z0-9]{4}[\s]?(?:[A-Z0-9]{4}[\s]?){1,7}[A-Z0-9]{1,4})\b"
+    )
+
+    # Known IBAN lengths by country code
+    COUNTRY_LENGTHS: dict[str, int] = {
+        "AL": 28, "AD": 24, "AT": 20, "AZ": 28, "BH": 22, "BY": 28,
+        "BE": 16, "BA": 20, "BR": 29, "BG": 22, "CR": 22, "HR": 21,
+        "CY": 28, "CZ": 24, "DK": 18, "DO": 28, "TL": 23, "EE": 20,
+        "FO": 18, "FI": 18, "FR": 27, "GE": 22, "DE": 22, "GI": 23,
+        "GR": 27, "GL": 18, "GT": 28, "HU": 28, "IS": 26, "IQ": 23,
+        "IE": 22, "IL": 23, "IT": 27, "JO": 30, "KZ": 20, "XK": 20,
+        "KW": 30, "LV": 21, "LB": 28, "LI": 21, "LT": 20, "LU": 20,
+        "MT": 31, "MR": 27, "MU": 30, "MC": 27, "MD": 24, "ME": 22,
+        "NL": 18, "MK": 19, "NO": 15, "PK": 24, "PS": 29, "PL": 28,
+        "PT": 25, "QA": 29, "RO": 24, "LC": 32, "SM": 27, "SA": 24,
+        "RS": 22, "SC": 31, "SK": 24, "SI": 19, "ES": 24, "SE": 24,
+        "CH": 21, "TN": 24, "TR": 26, "UA": 29, "AE": 23, "GB": 22,
+        "VA": 22, "VG": 24,
+    }
+
+    @staticmethod
+    def _mod97_check(iban: str) -> bool:
+        """Validate IBAN using the mod-97 algorithm (ISO 7064)."""
+        # Remove spaces and move first 4 chars to end
+        clean = iban.replace(" ", "")
+        rearranged = clean[4:] + clean[:4]
+        # Convert letters to numbers (A=10, B=11, ..., Z=35)
+        numeric = ""
+        for ch in rearranged:
+            if ch.isdigit():
+                numeric += ch
+            else:
+                numeric += str(ord(ch) - ord("A") + 10)
+        return int(numeric) % 97 == 1
+
+    def detect(self, text: str) -> list[PIIEntity]:
+        entities = []
+        for match in self.PATTERN.finditer(text):
+            iban = match.group(1).replace(" ", "")
+            country = iban[:2]
+
+            # Validate length for known countries
+            if country in self.COUNTRY_LENGTHS:
+                if len(iban) != self.COUNTRY_LENGTHS[country]:
+                    continue
+
+            # Validate mod-97 checksum
+            if not self._mod97_check(iban):
+                continue
+
+            entities.append(
+                PIIEntity(
+                    text=match.group(1),
+                    pii_type=PIIType.IBAN,
+                    start=match.start(),
+                    end=match.end(),
+                )
+            )
+        return entities
+
+    @property
+    def supported_types(self) -> list[PIIType]:
+        return [PIIType.IBAN]
+
+
 class MACAddressDetector(BaseDetector):
     """Detects MAC addresses in common formats."""
 
