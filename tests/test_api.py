@@ -134,3 +134,29 @@ class TestEngineCaching:
         e1 = _get_default_engine()
         e2 = _get_regex_only_engine()
         assert e1 is not e2
+
+
+class TestAllowlistInAPI:
+    def test_redact_text_with_allowlist_strings(self):
+        result = redact_text(
+            "Email john@safe.com or bob@test.com",
+            mode="label",
+            use_ner=False,
+            allowlist=["john@safe.com"],
+        )
+        assert "john@safe.com" in result.text
+        assert "[EMAIL]" in result.text
+
+    def test_scan_text_with_allowlist(self):
+        entities = scan_text(
+            "john@safe.com and bob@test.com",
+            use_ner=False,
+            allowlist=["john@safe.com"],
+        )
+        texts = [e.text for e in entities]
+        assert "john@safe.com" not in texts
+        assert "bob@test.com" in texts
+
+    def test_contains_pii_with_allowlist(self):
+        assert contains_pii("john@safe.com", allowlist=["john@safe.com"]) is False
+        assert contains_pii("bob@test.com", allowlist=["john@safe.com"]) is True
