@@ -5,6 +5,7 @@ from __future__ import annotations
 import functools
 from pathlib import Path
 
+from redactify.core.allowlist import Allowlist
 from redactify.core.detector import PIIEntity, PIIType
 from redactify.core.engine import RedactionEngine
 from redactify.core.redactor import RedactionMode
@@ -31,13 +32,19 @@ def _resolve_engine(
     use_ner: bool = True,
     confidence_threshold: float = 0.0,
     custom_patterns: list[dict] | None = None,
+    allowlist: Allowlist | list[str] | None = None,
 ) -> RedactionEngine:
     """Return a cached default engine or build a new one for custom args."""
+    # Coerce list[str] to Allowlist
+    if isinstance(allowlist, list):
+        allowlist = Allowlist.from_list(allowlist)
+
     is_default = (
         (mode is RedactionMode.BLACKOUT or mode == "blackout")
         and detect_types is None
         and confidence_threshold == 0.0
         and custom_patterns is None
+        and allowlist is None
     )
     if is_default and use_ner:
         return _get_default_engine()
@@ -49,6 +56,7 @@ def _resolve_engine(
         use_ner=use_ner,
         confidence_threshold=confidence_threshold,
         custom_patterns=custom_patterns,
+        allowlist=allowlist,
     )
 
 
