@@ -115,6 +115,9 @@ Output: "Contact [PERSON] at [EMAIL] or [PHONE]. SSN: [SSN]"
 | 📁 **Batch Processing** | Redact entire directories, recursively |
 | 👁️ **Dry-run Mode** | Preview what would be redacted before writing |
 | 🎯 **Confidence Filtering** | Set thresholds to control detection sensitivity |
+| 🚫 **Allowlist** | Exclude known-safe values from detection |
+| ⚡ **Parallel Processing** | `--workers N` for faster batch operations |
+| 🐳 **Docker Ready** | Pre-built image with all models included |
 
 ---
 
