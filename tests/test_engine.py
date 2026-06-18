@@ -1,5 +1,6 @@
 """Tests for the redaction engine."""
 
+import json
 import tempfile
 from pathlib import Path
 
@@ -222,3 +223,42 @@ class TestNewDetectorsIntegration:
         assert PIIType.MAC_ADDRESS in supported
         assert PIIType.IPV6 in supported
         assert PIIType.DRIVERS_LICENSE in supported
+
+
+class TestFromConfig:
+    """Tests for RedactionEngine.from_config()."""
+
+    def test_from_config_json(self, tmp_path):
+        config = {
+            "mode": "label",
+            "detect_types": ["email"],
+            "use_ner": False,
+        }
+        cfg_path = tmp_path / ".redactify.json"
+        cfg_path.write_text(json.dumps(config))
+        engine = RedactionEngine.from_config(cfg_path)
+        result = engine.redact_text("Email: john@example.com and 555-123-4567")
+        assert "[EMAIL]" in result.text
+        # Phone should not be detected since detect_types=["email"]
+        assert "555-123-4567" in result.text
+
+    def test_from_config_with_allowlist(self, tmp_path):
+        config = {
+            "mode": "label",
+            "use_ner": False,
+            "allowlist": ["john@example.com"],
+        }
+        cfg_path = tmp_path / ".redactify.json"
+        cfg_path.write_text(json.dumps(config))
+        engine = RedactionEngine.from_config(cfg_path)
+        entities = engine.scan_text("Contact john@example.com or bob@test.com")
+        texts = [e.text for e in entities]
+        assert "john@example.com" not in texts
+        assert "bob@test.com" in texts
+
+    def test_from_config_defaults(self, tmp_path):
+        cfg_path = tmp_path / ".redactify.json"
+        cfg_path.write_text("{}")
+        engine = RedactionEngine.from_config(cfg_path)
+        result = engine.redact_text("Email: john@example.com")
+        assert "john@example.com" not in result.text
