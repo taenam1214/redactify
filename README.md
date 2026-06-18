@@ -141,7 +141,13 @@ Output: "Contact [PERSON] at [EMAIL] or [PHONE]. SSN: [SSN]"
 | Phone numbers | Regex | `(555) 123-4567`, `+44 20 7946 0958` |
 | SSN / National IDs | Regex + validation | `123-45-6789` |
 | Credit card numbers | Regex + Luhn | `4111 1111 1111 1111` |
-| IP addresses | Regex | `192.168.1.1` |
+| IP addresses (v4) | Regex | `192.168.1.1` |
+| IPv6 addresses | Regex | `2001:0db8:85a3::8a2e:0370:7334` |
+| MAC addresses | Regex | `00:1A:2B:3C:4D:5E` |
+| IBAN | Regex + mod-97 | `DE89370400440532013000` |
+| Passport numbers | Regex + context | `Passport: 123456789` |
+| Drivers licenses | Regex + context | `DL: D1234567` (CA format) |
+| URLs with PII | Regex + path analysis | `https://api.com/users/john` |
 | Dates of birth | Regex + context | `Born on 01/15/1990` |
 | Person names | spaCy NER | `John Smith`, `María García` |
 | Organizations | spaCy NER | `Google`, `NHS`, `Acme Corp` |
