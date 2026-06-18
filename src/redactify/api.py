@@ -169,6 +169,7 @@ def scan(
     use_ner: bool = True,
     confidence_threshold: float = 0.0,
     custom_patterns: list[dict] | None = None,
+    allowlist: Allowlist | list[str] | None = None,
 ) -> RedactionReport:
     """Scan a file for PII without redacting.
 
@@ -187,6 +188,7 @@ def scan(
         use_ner=use_ner,
         confidence_threshold=confidence_threshold,
         custom_patterns=custom_patterns,
+        allowlist=allowlist,
     )
     return engine.scan(Path(file_path))
 
@@ -200,6 +202,7 @@ def redact(
     use_ner: bool = True,
     confidence_threshold: float = 0.0,
     custom_patterns: list[dict] | None = None,
+    allowlist: Allowlist | list[str] | None = None,
 ) -> RedactionReport:
     """Redact PII from a file.
 
@@ -215,12 +218,15 @@ def redact(
     Returns:
         A :class:`RedactionReport` summarizing what was redacted.
     """
+    # Coerce list[str] to Allowlist
+    al = Allowlist.from_list(allowlist) if isinstance(allowlist, list) else allowlist
     engine = RedactionEngine(
         mode=mode,
         detect_types=detect_types,
         use_ner=use_ner,
         confidence_threshold=confidence_threshold,
         custom_patterns=custom_patterns,
+        allowlist=al,
     )
     out = Path(output_path) if output_path is not None else None
     return engine.redact(Path(file_path), output_path=out)
