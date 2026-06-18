@@ -50,6 +50,36 @@ class RedactionEngine:
         self.parsers: list[BaseParser] = self._build_parsers()
         self.confidence_threshold = confidence_threshold
 
+    @classmethod
+    def from_config(cls, path: "Path | str | None" = None) -> "RedactionEngine":
+        """Create an engine from a config file.
+
+        Loads ``.redactify.json`` / ``.redactify.yml`` from the current directory
+        if no path is provided.
+
+        Args:
+            path: Path to a config file, or None to auto-detect.
+
+        Returns:
+            A configured RedactionEngine instance.
+        """
+        from redactify.utils.config import RedactifyConfig
+
+        config_path = Path(path) if path else None
+        cfg = RedactifyConfig.from_file(config_path)
+
+        allowlist = None
+        if cfg.allowlist:
+            allowlist = Allowlist.from_list(cfg.allowlist)
+
+        return cls(
+            mode=cfg.mode,
+            detect_types=cfg.detect_types or None,
+            use_ner=cfg.use_ner,
+            custom_patterns=cfg.custom_patterns or None,
+            allowlist=allowlist,
+        )
+
     @staticmethod
     def _build_parsers() -> list[BaseParser]:
         """Build list of available parsers."""
