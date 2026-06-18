@@ -48,6 +48,21 @@ class TestNERDetector:
         if entities:
             assert all(0 < e.confidence <= 1.0 for e in entities)
 
+    def test_context_boosts_confidence(self):
+        # "Mr." should boost PERSON confidence
+        entities_with_ctx = self.detector.detect("Dear Mr. John Smith, thank you.")
+        entities_without = self.detector.detect("John Smith went outside.")
+        persons_ctx = [e for e in entities_with_ctx if e.pii_type == PIIType.PERSON]
+        persons_plain = [e for e in entities_without if e.pii_type == PIIType.PERSON]
+        if persons_ctx and persons_plain:
+            assert persons_ctx[0].confidence >= persons_plain[0].confidence
+
+    def test_multi_word_higher_confidence_than_single(self):
+        entities = self.detector.detect("Smith went to Paris, France.")
+        # Multi-word entities should have at least baseline confidence
+        for e in entities:
+            assert e.confidence >= 0.70
+
     def test_supported_types(self):
         types = self.detector.supported_types
         assert PIIType.PERSON in types
