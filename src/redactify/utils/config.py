@@ -2,14 +2,19 @@
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
 import json
 
+from redactify.exceptions import ConfigValidationError
+
 
 DEFAULT_CONFIG_FILE = ".redactify.json"
 YAML_EXTENSIONS = {".yml", ".yaml"}
+
+_VALID_MODES = {"blackout", "label", "hash", "custom"}
 
 
 @dataclass
@@ -22,6 +27,49 @@ class RedactifyConfig:
     custom_patterns: list[dict] = field(default_factory=list)
     output_format: str = "console"
     allowlist: list[str] = field(default_factory=list)
+
+    def validate(self) -> None:
+        """Validate config values, raising ConfigValidationError on problems."""
+        if self.mode not in _VALID_MODES:
+            raise ConfigValidationError(
+                f"'{self.mode}' is not a valid mode. Choose from: {', '.join(sorted(_VALID_MODES))}",
+                field="mode",
+            )
+
+        # Validate detect_types are real PIIType values
+        if self.detect_types:
+            from redactify.core.detector import PIIType
+            valid_types = {t.value for t in PIIType}
+            for dt in self.detect_types:
+                if dt.lower() not in valid_types:
+                    raise ConfigValidationError(
+                        f"'{dt}' is not a recognized PII type. "
+                        f"Valid types: {', '.join(sorted(valid_types))}",
+                        field="detect_types",
+                    )
+
+        # Validate custom pattern regexes compile
+        for i, pattern in enumerate(self.custom_patterns):
+            if "pattern" in pattern:
+                try:
+                    re.compile(pattern["pattern"])
+                except re.error as e:
+                    name = pattern.get("name", f"pattern[{i}]")
+                    raise ConfigValidationError(
+                        f"Invalid regex in '{name}': {e}",
+                        field="custom_patterns",
+                    )
+
+        # Validate allowlist regex entries compile
+        for entry in self.allowlist:
+            if entry.startswith("regex:"):
+                try:
+                    re.compile(entry[6:].strip())
+                except re.error as e:
+                    raise ConfigValidationError(
+                        f"Invalid allowlist regex '{entry}': {e}",
+                        field="allowlist",
+                    )
 
     @classmethod
     def from_file(cls, path: Path | None = None) -> RedactifyConfig:
@@ -44,7 +92,7 @@ class RedactifyConfig:
         else:
             data = json.loads(content)
 
-        return cls(
+        config = cls(
             mode=data.get("mode", "blackout"),
             detect_types=data.get("detect_types", []),
             use_ner=data.get("use_ner", True),
@@ -52,6 +100,8 @@ class RedactifyConfig:
             output_format=data.get("output_format", "console"),
             allowlist=data.get("allowlist", []),
         )
+        config.validate()
+        return config
 
     @staticmethod
     def _find_config_file() -> Path | None:
