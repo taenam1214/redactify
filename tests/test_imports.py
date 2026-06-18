@@ -30,6 +30,10 @@ class TestTopLevelImports:
         assert callable(scan)
         assert callable(scan_text)
 
+    def test_import_allowlist(self):
+        from redactify import Allowlist
+        assert Allowlist is not None
+
 
 class TestSubpackageImports:
     def test_import_detectors(self):
@@ -55,5 +59,8 @@ class TestSubpackageImports:
         assert read_file_safe is not None
 
     def test_import_exceptions(self):
-        from redactify.exceptions import RedactifyError, UnsupportedFileTypeError
+        from redactify.exceptions import (
+            RedactifyError, UnsupportedFileTypeError, ConfigValidationError
+        )
         assert issubclass(UnsupportedFileTypeError, RedactifyError)
+        assert issubclass(ConfigValidationError, RedactifyError)
