@@ -258,15 +258,18 @@ engine = RedactionEngine(
 redactify/
 ├── src/redactify/
 │   ├── cli.py              # Click CLI (redact, scan, config, supported)
+│   ├── api.py              # Module-level convenience functions
 │   ├── core/
 │   │   ├── engine.py       # Main orchestrator
 │   │   ├── detector.py     # Detection interface + PIIType/PIIEntity
 │   │   ├── redactor.py     # Redaction strategies
+│   │   ├── allowlist.py    # Allowlist for safe values
+│   │   ├── results.py      # TextResult for in-memory operations
 │   │   └── filters.py      # Confidence/type/length filtering
 │   ├── detectors/
-│   │   ├── regex.py        # Email, phone, SSN, credit card, IP, DOB
+│   │   ├── regex.py        # Email, phone, SSN, CC, IP, IPv6, MAC, IBAN, etc.
 │   │   ├── ner.py          # spaCy NER (names, orgs, locations)
-│   │   ├── composite.py    # Multi-detector with deduplication
+│   │   ├── composite.py    # Multi-detector with deduplication + allowlist
 │   │   └── custom.py       # User-defined patterns
 │   ├── parsers/
 │   │   ├── text.py         # .txt, .csv, .log, .md
