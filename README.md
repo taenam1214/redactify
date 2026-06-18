@@ -170,19 +170,45 @@ Output: "Contact [PERSON] at [EMAIL] or [PHONE]. SSN: [SSN]"
 
 ## Python API
 
+### Quick Functions (no setup required)
+
 ```python
-from redactify import RedactionEngine, RedactionMode
+import redactify
 
-engine = RedactionEngine(mode=RedactionMode.LABEL)
+# One-liner redaction
+result = redactify.redact_text("Email john@acme.com for info", mode="label")
+print(result.text)  # "Email [EMAIL] for info"
 
-# Scan for PII
+# Quick PII check (regex-only, fast)
+redactify.contains_pii("Call 555-123-4567")  # True
+
+# Scan for entities
+entities = redactify.scan_text("SSN: 123-45-6789")
+for e in entities:
+    print(f"  {e.pii_type.value}: {e.text}")
+```
+
+### Engine API (full control)
+
+```python
+from redactify import RedactionEngine, Allowlist
+
+# String args work — no need for enum imports
+engine = RedactionEngine(mode="label", detect_types=["email", "phone"])
+
+# In-memory operations (no file I/O)
+result = engine.redact_text("Contact john@acme.com or 555-1234")
+print(result.text)           # "Contact [EMAIL] or [PHONE]"
+print(result.has_pii)        # True
+print(result.entities_by_type)  # {"email": 1, "phone": 1}
+
+# File-based operations
 report = engine.scan("document.txt")
-print(f"Found {report.total_entities} PII entities")
-for pii_type, count in report.entities_by_type.items():
-    print(f"  {pii_type}: {count}")
-
-# Redact
 report = engine.redact("document.txt", output_path="clean.txt")
+
+# Allowlist: exclude known-safe values
+al = Allowlist.from_file("safe-values.txt")
+engine = RedactionEngine(mode="label", allowlist=al)
 ```
 
 ### Custom Patterns
