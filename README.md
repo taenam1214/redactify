@@ -314,6 +314,13 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 - [x] Pre-commit hook integration
 - [x] Streaming support for large files
 - [x] Redaction audit trail
+- [x] Allowlist system for safe values
+- [x] Parallel batch processing
+- [x] IBAN, passport, URL, MAC, IPv6, drivers license detectors
+- [x] In-memory string API (`redact_text`, `scan_text`, `contains_pii`)
+- [x] YAML config support
+- [x] Docker image
+- [x] GitHub Action for CI scanning
 - [ ] OCR support (images with text)
 - [ ] Local web UI (drag-and-drop)
 - [ ] Multi-language NER models
