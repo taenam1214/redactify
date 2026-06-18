@@ -102,6 +102,7 @@ def scan_text(
     use_ner: bool = True,
     confidence_threshold: float = 0.0,
     custom_patterns: list[dict] | None = None,
+    allowlist: Allowlist | list[str] | None = None,
 ) -> list[PIIEntity]:
     """Scan a string for PII without redacting.
 
@@ -111,6 +112,7 @@ def scan_text(
         use_ner: Whether to use spaCy NER. Defaults to ``True``.
         confidence_threshold: Minimum confidence score to keep.
         custom_patterns: Extra regex patterns.
+        allowlist: Values to exclude from detection (Allowlist or list of strings).
 
     Returns:
         A list of detected :class:`PIIEntity` instances.
@@ -120,6 +122,7 @@ def scan_text(
         use_ner=use_ner,
         confidence_threshold=confidence_threshold,
         custom_patterns=custom_patterns,
+        allowlist=allowlist,
     )
     return engine.scan_text(text)
 
