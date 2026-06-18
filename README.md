@@ -58,11 +58,27 @@ redactify redact file.txt --detect email,phone,ssn
 # Batch process a directory
 redactify redact ./documents/ -o ./redacted/ -r
 
+# Parallel batch processing
+redactify redact ./documents/ -o ./redacted/ -r --workers 4
+
 # Preview without writing (dry run)
 redactify redact file.txt --dry-run
 
 # High-confidence detections only
 redactify redact file.txt --confidence 0.8
+
+# Exclude known-safe values
+redactify redact file.txt --allowlist safe-values.txt
+
+# List all supported PII types
+redactify supported
+```
+
+### Docker
+
+```bash
+docker run --rm -v $(pwd):/data ghcr.io/taenam1214/redactify scan /data/file.txt
+docker run --rm -v $(pwd):/data ghcr.io/taenam1214/redactify redact /data/file.txt -o /data/redacted.txt
 ```
 
 ---
