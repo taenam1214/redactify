@@ -216,17 +216,40 @@ def config(do_init: bool, show: bool, path: Path | None, config_format: str):
         click.echo("Use --init to create a config or --show to display current config.")
 
 
+_PII_DESCRIPTIONS = {
+    "email": ("Email addresses", "regex"),
+    "phone": ("Phone numbers (US + international)", "regex"),
+    "ssn": ("US Social Security Numbers", "regex + validation"),
+    "credit_card": ("Credit card numbers", "regex + Luhn"),
+    "ip_address": ("IPv4 addresses", "regex"),
+    "ipv6": ("IPv6 addresses", "regex"),
+    "mac_address": ("MAC addresses", "regex"),
+    "date_of_birth": ("Dates of birth", "regex + context"),
+    "iban": ("International Bank Account Numbers", "regex + mod-97"),
+    "passport": ("Passport numbers (US/UK/EU)", "regex + context"),
+    "url": ("URLs containing PII", "regex + path analysis"),
+    "drivers_license": ("US drivers license numbers", "regex + context"),
+    "person": ("Person names", "spaCy NER"),
+    "organization": ("Organization names", "spaCy NER"),
+    "location": ("Locations / addresses", "spaCy NER"),
+    "custom": ("User-defined patterns", "config regex"),
+}
+
+
 @main.command()
 def supported():
     """List all supported PII types and file formats."""
-    click.echo("\n  Supported PII types:")
+    click.echo("\n  Supported PII types:\n")
+    click.echo(f"    {'Type':<20s} {'Description':<40s} {'Method'}")
+    click.echo(f"    {'─' * 20} {'─' * 40} {'─' * 20}")
     for pii_type in PIIType:
-        click.echo(f"    - {pii_type.value}")
-    click.echo("\n  Supported file formats:")
-    click.echo("    - .txt, .csv, .log, .md (plain text)")
-    click.echo("    - .html, .htm (HTML)")
-    click.echo("    - .pdf (requires: pip install redactify[pdf])")
-    click.echo("    - .docx (requires: pip install redactify[docx])")
+        desc, method = _PII_DESCRIPTIONS.get(pii_type.value, (pii_type.value, "—"))
+        click.echo(f"    {pii_type.value:<20s} {desc:<40s} {method}")
+    click.echo("\n  Supported file formats:\n")
+    click.echo("    .txt, .csv, .log, .md    Plain text")
+    click.echo("    .html, .htm              HTML (tag stripping)")
+    click.echo("    .pdf                     PDF (requires: pip install redactify[pdf])")
+    click.echo("    .docx                    DOCX (requires: pip install redactify[docx])")
     click.echo("")
 
 
