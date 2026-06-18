@@ -134,6 +134,7 @@ def contains_pii(
     use_ner: bool = False,
     confidence_threshold: float = 0.0,
     custom_patterns: list[dict] | None = None,
+    allowlist: Allowlist | list[str] | None = None,
 ) -> bool:
     """Check whether a string contains any PII.
 
@@ -156,6 +157,7 @@ def contains_pii(
         use_ner=use_ner,
         confidence_threshold=confidence_threshold,
         custom_patterns=custom_patterns,
+        allowlist=allowlist,
     )
     return len(entities) > 0
 
