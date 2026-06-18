@@ -37,6 +37,13 @@ All notable changes to this project will be documented in this file.
 - Minimum 80% code coverage enforcement in CI
 - Security scanning workflow (pip-audit + bandit)
 - Dependabot configuration for automated dependency updates
+- `RedactionEngine.from_config()` factory method for config-file-driven instantiation
+- `--allowlist` CLI flag for scan and redact commands
+- Auto-loading allowlist from config file when no `--allowlist` flag is given
+- Config validation on load: invalid modes, unknown PII types, broken regexes
+- Enhanced `supported` command with descriptions and detection methods
+- `allowlist` parameter on all convenience functions (`redact_text`, `scan_text`, etc.)
+- Context-aware NER confidence scoring (replaces hardcoded 0.85)
 
 ## [0.2.0] - 2026-06-04
 
