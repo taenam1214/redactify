@@ -65,12 +65,19 @@ def redact(file: Path, output: Path | None, mode: str, detect: str | None, no_ne
     """Redact PII from a document or directory."""
     detect_types = _parse_detect_types(detect)
     redaction_mode = RedactionMode(mode)
-    allowlist = Allowlist.from_file(allowlist_path) if allowlist_path else None
+
+    # Load allowlist: CLI flag takes priority, then config file
+    if allowlist_path:
+        allowlist = Allowlist.from_file(allowlist_path)
+    else:
+        cfg = RedactifyConfig.from_file()
+        allowlist = Allowlist.from_list(cfg.allowlist) if cfg.allowlist else None
 
     if verbose and not quiet:
         click.echo(f"  Mode: {redaction_mode.value}, NER: {not no_ner}, Confidence: {confidence}")
         if allowlist:
-            click.echo(f"  Allowlist: {allowlist_path} ({len(allowlist.exact_strings)} strings, {len(allowlist.patterns)} patterns)")
+            src = str(allowlist_path) if allowlist_path else "config"
+            click.echo(f"  Allowlist ({src}): {len(allowlist.exact_strings)} strings, {len(allowlist.patterns)} patterns")
 
     engine = RedactionEngine(
         mode=redaction_mode,
@@ -140,12 +147,18 @@ def redact(file: Path, output: Path | None, mode: str, detect: str | None, no_ne
 def scan(file: Path, detect: str | None, no_ner: bool, confidence: float, recursive: bool, report_format: str, use_json: bool, strict: bool, stream: bool, workers: int, quiet: bool, verbose: int, allowlist_path: Path | None):
     """Scan a document or directory for PII without redacting."""
     detect_types = _parse_detect_types(detect)
-    allowlist = Allowlist.from_file(allowlist_path) if allowlist_path else None
+
+    if allowlist_path:
+        allowlist = Allowlist.from_file(allowlist_path)
+    else:
+        cfg = RedactifyConfig.from_file()
+        allowlist = Allowlist.from_list(cfg.allowlist) if cfg.allowlist else None
 
     if verbose and not quiet:
         click.echo(f"  NER: {not no_ner}, Confidence: {confidence}")
         if allowlist:
-            click.echo(f"  Allowlist: {allowlist_path} ({len(allowlist.exact_strings)} strings, {len(allowlist.patterns)} patterns)")
+            src = str(allowlist_path) if allowlist_path else "config"
+            click.echo(f"  Allowlist ({src}): {len(allowlist.exact_strings)} strings, {len(allowlist.patterns)} patterns")
 
     engine = RedactionEngine(
         detect_types=detect_types,
