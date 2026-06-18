@@ -147,6 +147,11 @@ Output: "Contact [PERSON] at [EMAIL] or [PHONE]. SSN: [SSN]"
 | DOCX support | ✅ | ❌ | ❌ |
 | CLI tool | ✅ | ❌ | Limited |
 | Batch processing | ✅ | ❌ | ❌ |
+| Parallel workers | ✅ | ❌ | ❌ |
+| Allowlist | ✅ | ✅ | ❌ |
+| In-memory string API | ✅ | ✅ | ✅ |
+| Docker image | ✅ | ✅ | ❌ |
+| GitHub Action | ✅ | ❌ | ❌ |
 | Multiple redaction modes | 4 | Custom | 1 |
 | Lightweight install | ~50MB | ~500MB+ | ~30MB |
 
