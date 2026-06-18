@@ -4,6 +4,9 @@ import json
 import tempfile
 from pathlib import Path
 
+import pytest
+
+from redactify.exceptions import ConfigValidationError
 from redactify.utils.config import RedactifyConfig
 
 
@@ -54,3 +57,35 @@ class TestRedactifyConfig:
         )
         assert len(config.custom_patterns) == 1
         assert config.custom_patterns[0]["name"] == "order_id"
+
+
+class TestConfigValidation:
+    def test_invalid_mode_raises(self, tmp_path):
+        cfg_path = tmp_path / ".redactify.json"
+        cfg_path.write_text(json.dumps({"mode": "destroy"}))
+        with pytest.raises(ConfigValidationError, match="mode"):
+            RedactifyConfig.from_file(cfg_path)
+
+    def test_invalid_detect_type_raises(self, tmp_path):
+        cfg_path = tmp_path / ".redactify.json"
+        cfg_path.write_text(json.dumps({"detect_types": ["emal"]}))
+        with pytest.raises(ConfigValidationError, match="detect_types"):
+            RedactifyConfig.from_file(cfg_path)
+
+    def test_invalid_custom_pattern_regex_raises(self, tmp_path):
+        cfg_path = tmp_path / ".redactify.json"
+        cfg_path.write_text(json.dumps({
+            "custom_patterns": [{"name": "bad", "pattern": "[invalid"}]
+        }))
+        with pytest.raises(ConfigValidationError, match="custom_patterns"):
+            RedactifyConfig.from_file(cfg_path)
+
+    def test_invalid_allowlist_regex_raises(self, tmp_path):
+        cfg_path = tmp_path / ".redactify.json"
+        cfg_path.write_text(json.dumps({"allowlist": ["regex:[unclosed"]}))
+        with pytest.raises(ConfigValidationError, match="allowlist"):
+            RedactifyConfig.from_file(cfg_path)
+
+    def test_valid_config_does_not_raise(self):
+        cfg = RedactifyConfig(mode="label", detect_types=["email", "phone"])
+        cfg.validate()  # should not raise
