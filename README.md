@@ -297,8 +297,14 @@ make dev
 # Run tests
 make test
 
+# Run with coverage
+make coverage
+
 # Lint
 make lint
+
+# Run benchmarks
+make bench
 ```
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
